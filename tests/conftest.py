@@ -9,6 +9,8 @@ handsets.
 from __future__ import annotations
 
 import asyncio
+import json
+import pathlib
 from collections.abc import Callable
 from typing import Any
 from unittest.mock import AsyncMock, patch
@@ -169,6 +171,21 @@ async def settle(hass, cycles: int = 60) -> None:
     """
     for _ in range(cycles):
         await asyncio.sleep(0)
+
+
+@pytest.fixture
+def integration_version() -> str:
+    """The version the integration actually declares.
+
+    Never hardcode it in a test: the release workflow bumps the manifest, and a
+    hardcoded copy turns every release into a red build - which is exactly what
+    happened the first time a release was attempted.
+    """
+    manifest = (
+        pathlib.Path(__file__).resolve().parents[1]
+        / "custom_components/pbx_page/manifest.json"
+    )
+    return json.loads(manifest.read_text())["version"]
 
 
 @pytest.fixture

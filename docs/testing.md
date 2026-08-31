@@ -45,7 +45,13 @@ python3 -m venv .venv
 Pin the framework to the Home Assistant version you target;
 `0.13.346` is HA 2026.7.2.
 
-### Two things that will bite you
+### Three things that will bite you
+
+**Never hardcode the version in a test.** Use the `integration_version` fixture.
+The release workflow bumps the manifest before running the tests, so a hardcoded
+copy fails on every release — which is exactly how the first release attempt
+died, at the `test before tagging` step.
+
 
 `hass.async_block_till_done()` waits for the entity's queue worker to finish the
 page it is on. Call it while a page is deliberately held open and it blocks for

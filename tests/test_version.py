@@ -11,19 +11,20 @@ from custom_components.pbx_page import _async_warn_on_version_mismatch
 
 
 async def test_mismatch_is_warned_about(
-    hass: HomeAssistant, enable_custom_integrations, caplog
+    hass: HomeAssistant, enable_custom_integrations, caplog, integration_version
 ) -> None:
+    other = f"{integration_version}-not-this-one"
     with caplog.at_level(logging.WARNING):
-        await _async_warn_on_version_mismatch(hass, "9.9.9")
+        await _async_warn_on_version_mismatch(hass, other)
     assert "version mismatch" in caplog.text
-    assert "9.9.9" in caplog.text
+    assert other in caplog.text
 
 
 async def test_matching_versions_are_quiet(
-    hass: HomeAssistant, enable_custom_integrations, caplog
+    hass: HomeAssistant, enable_custom_integrations, caplog, integration_version
 ) -> None:
     with caplog.at_level(logging.WARNING):
-        await _async_warn_on_version_mismatch(hass, "0.1.0")
+        await _async_warn_on_version_mismatch(hass, integration_version)
     assert "version mismatch" not in caplog.text
 
 

@@ -71,9 +71,9 @@ async def test_diagnostics_includes_entity_state(
 
 
 async def test_diagnostics_reports_both_versions(
-    hass: HomeAssistant, setup_integration, sidecar
+    hass: HomeAssistant, setup_integration, sidecar, integration_version
 ) -> None:
     """A mismatch should be obvious in a bug report without being asked for."""
     diagnostics = await async_get_config_entry_diagnostics(hass, setup_integration)
-    assert diagnostics["versions"]["integration"] == "0.1.0"
+    assert diagnostics["versions"]["integration"] == integration_version
     assert diagnostics["versions"]["sidecar"] == "test"
