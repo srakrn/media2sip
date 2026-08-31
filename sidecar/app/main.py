@@ -23,7 +23,7 @@ from .media import MediaError, MediaResolver
 from .models import AccountHealth, CallRequest, CallResponse, Health
 from .sip import SipError, SipWorker
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 
 _LOGGER = logging.getLogger(__name__)
 
