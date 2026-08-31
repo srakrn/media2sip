@@ -91,6 +91,11 @@ HACS does not carry this by default, so add it as a custom repository once:
 Updates then appear in HACS like any other. When one does, update the sidecar to
 the matching version too.
 
+It shows a generic icon rather than its own. Integration icons live in
+[home-assistant/brands](https://github.com/home-assistant/brands), which is only
+needed to get into the HACS default store; a custom repository does not require
+it, and nothing else is affected.
+
 > Don't have HACS? Install it from [hacs.xyz](https://hacs.xyz/docs/use/download/download/),
 > or use the manual method below — HACS is only a convenience here.
 

@@ -10,6 +10,25 @@ Three suites, deliberately separated by what they need to run.
 
 Nothing anywhere depends on FreePBX, or on your PBX being reachable.
 
+## Continuous integration
+
+| Workflow | Runs on | Does |
+| --- | --- | --- |
+| `tests.yml` | every push and PR | all three suites below |
+| `validate.yml` | every push, PR, and weekly | version consistency, hassfest, HACS, add-on config |
+| `prepare-release.yml` | manual | bumps versions, tests, tags, opens a draft release |
+| `release.yml` | publishing a release | builds and pushes the image, fills in the notes |
+
+`validate.yml` skips the HACS **brands** check. Brand assets live in
+[home-assistant/brands](https://github.com/home-assistant/brands) and exist to get
+an integration into the HACS default store; this one is installed as a custom
+repository, so the check can never pass from here and does not need to. The only
+consequence is a default icon.
+
+The weekly run on `validate.yml` is there because those checks depend on things
+outside the repository — Home Assistant's manifest rules and HACS's own — which
+can start failing without anything here changing.
+
 ## Integration suite
 
 The entity, the concurrency policies, the config flow, the client and

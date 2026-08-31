@@ -30,6 +30,11 @@ jobs:
       - uses: hacs/action@main
         with:
           category: integration
+          # `brands` only matters for inclusion in the HACS default store, which
+          # needs a merged PR to home-assistant/brands. This is installed as a
+          # custom repository, where it is not required - the integration just
+          # shows a default icon.
+          ignore: brands
 
   addon:
     name: add-on config

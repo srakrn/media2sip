@@ -6,9 +6,10 @@ is what makes it maintainable.
 
 ## Install
 
-Copy `custom_components/pbx_page/` into your Home Assistant `config/` directory
-(or add this repository to HACS), restart, then **Settings → Devices & Services →
-Add Integration → PBX Page**. The flow asks for the sidecar's URL and validates it
+Install through HACS as a custom repository, or copy
+`custom_components/pbx_page/` into your Home Assistant `config/` directory. Either
+way, restart, then **Settings → Devices & Services → Add Integration → PBX Page**.
+Full walkthrough in [installation.md](installation.md). The flow asks for the sidecar's URL and validates it
 against `/health`, so a typo shows up there rather than as an entity that is
 permanently unavailable. Then add paging targets one at a time.
 
