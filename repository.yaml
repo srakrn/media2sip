@@ -5,5 +5,5 @@
 # custom_components/). The two mechanisms look at different files and do not
 # collide, which keeps both halves of the project versioned together.
 name: PBX Page
-url: https://github.com/srakrn/pbx-ha-media
+url: https://github.com/srakrn/media2sip
 maintainer: srakrn <tanersirakorn@gmail.com>

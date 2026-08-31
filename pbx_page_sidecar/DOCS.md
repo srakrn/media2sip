@@ -2,7 +2,7 @@
 
 Registers as an ordinary SIP extension and dials your paging extension on demand,
 so Home Assistant can speak through the handsets. It is the half of
-[PBX Page](https://github.com/srakrn/pbx-ha-media) that holds the SIP stack; the
+[PBX Page](https://github.com/srakrn/media2sip) that holds the SIP stack; the
 `pbx_page` integration talks to it over a local HTTP API.
 
 ## Before you start

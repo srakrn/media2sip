@@ -2,7 +2,7 @@ name: PBX Page Sidecar
 version: "0.1.0"
 slug: pbx_page_sidecar
 description: SIP user agent that pages PBX extensions on behalf of Home Assistant
-url: https://github.com/srakrn/pbx-ha-media/tree/main/sidecar
+url: https://github.com/srakrn/media2sip/tree/main/sidecar
 arch:
   - aarch64
   - amd64

@@ -1,4 +1,4 @@
-# pbx-ha-media
+# media2sip
 
 Expose SIP paging extensions as Home Assistant media players. `tts.speak` at a
 `media_player` entity and the handsets auto-answer and speak the message.
@@ -27,7 +27,7 @@ Full walkthrough in **[docs/installation.md](docs/installation.md)**. In short:
    which pulls the published image and needs no checkout. Check
    `curl -s localhost:8080/health` says `registered: true`.
 3. Install the integration through **HACS** as a custom repository
-   (`https://github.com/srakrn/pbx-ha-media`, type *Integration*), restart, then
+   (`https://github.com/srakrn/media2sip`, type *Integration*), restart, then
    add **PBX Page** and point it at the sidecar.
 
 The same repository serves HACS and the add-on store, so both halves stay
@@ -86,3 +86,7 @@ See [`docs/testing.md`](docs/testing.md).
 See [`plans/00-master-plan.md`](plans/00-master-plan.md) for the design and the
 reasoning behind it, and [`docs/environment.md`](docs/environment.md) for what this
 particular installation looks like.
+
+## License
+
+MIT — see [LICENSE](LICENSE).

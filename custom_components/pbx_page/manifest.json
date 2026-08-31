@@ -5,9 +5,9 @@
     "@srakrn"
   ],
   "config_flow": true,
-  "documentation": "https://github.com/srakrn/pbx-ha-media",
+  "documentation": "https://github.com/srakrn/media2sip",
   "iot_class": "local_push",
-  "issue_tracker": "https://github.com/srakrn/pbx-ha-media/issues",
+  "issue_tracker": "https://github.com/srakrn/media2sip/issues",
   "requirements": [],
   "version": "0.1.0"
 }

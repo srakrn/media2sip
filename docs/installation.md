@@ -21,7 +21,7 @@ Pick whichever matches your Home Assistant install.
 ### Home Assistant OS or supervised — the add-on
 
 1. **Settings → Add-ons → Add-on Store → ⋮ → Repositories**.
-2. Add `https://github.com/srakrn/pbx-ha-media`.
+2. Add `https://github.com/srakrn/media2sip`.
 3. Install **PBX Page Sidecar**, fill in the extension, secret and PBX host, and
    start it.
 
@@ -36,7 +36,7 @@ it pulls the published image and needs no checkout:
 
 ```sh
 mkdir pbx-page && cd pbx-page
-curl -O https://raw.githubusercontent.com/srakrn/pbx-ha-media/main/sidecar/docker-compose.example.yml
+curl -O https://raw.githubusercontent.com/srakrn/media2sip/main/sidecar/docker-compose.example.yml
 mv docker-compose.example.yml docker-compose.yml
 printf 'SIP_PASSWORD=your-extension-secret\n' > .env
 mkdir sounds
@@ -82,7 +82,7 @@ HACS does not carry this by default, so add it as a custom repository once:
 
 1. Open **HACS** in the sidebar.
 2. **⋮ (top right) → Custom repositories**.
-3. Repository: `https://github.com/srakrn/pbx-ha-media`. Type: **Integration**.
+3. Repository: `https://github.com/srakrn/media2sip`. Type: **Integration**.
    **Add**.
 4. Search HACS for **PBX Page** and **Download**.
 5. **Restart Home Assistant.** HACS copies files but does not load new
@@ -105,8 +105,8 @@ Copy the folder into your Home Assistant configuration directory, so you end up
 with `config/custom_components/pbx_page/manifest.json`, then restart:
 
 ```sh
-git clone https://github.com/srakrn/pbx-ha-media
-cp -r pbx-ha-media/custom_components/pbx_page /path/to/config/custom_components/
+git clone https://github.com/srakrn/media2sip
+cp -r media2sip/custom_components/pbx_page /path/to/config/custom_components/
 ```
 
 ### Configure it
