@@ -53,47 +53,101 @@ def reset_recording() -> None:
     subprocess.run(["docker", "exec", INSPECTOR, "rm", "-f", RECORDING], check=False)
 
 
+def asterisk(command: str) -> str:
+    return subprocess.run(
+        ["docker", "exec", "pbx-page-e2e-asterisk", "asterisk", "-rx", command],
+        capture_output=True, text=True,
+    ).stdout
+
+
 def wait_idle(timeout: float = 30.0) -> None:
-    """Wait for no call to be in flight, so tests do not tread on each other."""
+    """Wait for the call to be over on **both** sides.
+
+    Waiting only for the sidecar is not enough. It reports idle the moment it
+    hangs up, while Asterisk is still running the dialplan and closing the
+    recording. Every test writes to the same file, so a slow runner can let one
+    test's recording land on top of the next test's - which is exactly how this
+    suite failed in CI while passing locally: a lead-in test measured the
+    previous test's audio and read its lead-in instead of its own.
+    """
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         _, health = api("GET", "/health")
-        if not health.get("active_calls"):
+        if not health.get("active_calls") and "0 active channels" in asterisk("core show channels count"):
             return
         time.sleep(0.25)
-    raise AssertionError("a call was still in flight")
+    raise AssertionError(
+        f"still busy after {timeout}s: sidecar={api('GET', '/health')[1].get('active_calls')} "
+        f"asterisk={asterisk('core show channels count').strip()}"
+    )
 
 
-def analyse() -> dict:
-    """Measure the far end's recording: duration, level, and where sound starts."""
-    raw = subprocess.run(
-        ["docker", "exec", INSPECTOR, "cat", RECORDING], capture_output=True
-    ).stdout
-    assert raw, "Asterisk recorded nothing"
-
-    with open("/tmp/e2e-page.wav", "wb") as handle:
+def measure(raw: bytes) -> dict:
+    """Duration, level, and where sound starts and stops, for any 16-bit WAV."""
+    with open("/tmp/e2e-measure.wav", "wb") as handle:
         handle.write(raw)
-    with wave.open("/tmp/e2e-page.wav") as w:
+    with wave.open("/tmp/e2e-measure.wav") as w:
         rate = w.getframerate()
         frames = w.getnframes()
         samples = struct.unpack(f"<{frames * w.getnchannels()}h", w.readframes(frames))
 
     window = rate // 20
-    onset = next(
-        (
-            i / rate
-            for i in range(0, len(samples) - window, window)
-            if max(abs(s) for s in samples[i : i + window]) > 500
-        ),
-        None,
-    )
+    loud = [
+        i
+        for i in range(0, len(samples) - window, window)
+        if max(abs(s) for s in samples[i : i + window]) > 500
+    ]
+    onset = loud[0] / rate if loud else None
+    end = (loud[-1] + window) / rate if loud else None
     return {
         "rate": rate,
         "duration": frames / rate,
         "peak": max(abs(s) for s in samples),
         "rms": math.sqrt(sum(s * s for s in samples) / len(samples)),
         "onset": onset,
+        # First to last audible sample: how much of the clip actually arrived.
+        "span": None if onset is None else end - onset,
     }
+
+
+def source_clip(name: str) -> dict:
+    """The clip as the sidecar holds it, measured the same way as the recording.
+
+    Comparing the two is a round trip. Comparing the recording against the clip's
+    *duration* would not work: clips carry trailing silence, so an intact page
+    still sounds shorter than the file is long.
+    """
+    raw = subprocess.run(
+        ["docker", "exec", INSPECTOR, "cat", f"/opt/pbx-page/sounds/{name}.wav"],
+        capture_output=True,
+    ).stdout
+    assert raw, f"the sidecar image has no {name}.wav"
+    return measure(raw)
+
+
+def analyse() -> dict:
+    """Measure the far end's recording: duration, level, and where sound starts."""
+    # Read only once the file has stopped growing. Asterisk writes it
+    # progressively, and a half-written read would be measured as a short clip.
+    raw = b""
+    deadline = time.monotonic() + 10
+    while time.monotonic() < deadline:
+        current = subprocess.run(
+            ["docker", "exec", INSPECTOR, "cat", RECORDING], capture_output=True
+        ).stdout
+        if current and current == raw:
+            break
+        raw = current
+        time.sleep(0.25)
+    assert raw, "Asterisk recorded nothing"
+    return measure(raw)
+
+
+def history_for(call_id: str) -> dict:
+    _, history = api("GET", "/calls/history?limit=10")
+    record = next((c for c in history if c["call_id"] == call_id), None)
+    assert record is not None, f"no history for {call_id}"
+    return record
 
 
 @pytest.fixture(autouse=True)
@@ -134,24 +188,49 @@ def test_a_page_delivers_real_audio() -> None:
     assert audio["rms"] > 100
 
 
-def test_lead_in_is_honoured_at_the_far_end() -> None:
+# Why the lead-in is not measured from the recording's timeline
+# -------------------------------------------------------------
+# The obvious test - "page with lead_in 1.0, check the recording's first sound is
+# at 1.0s" - passes in isolation and fails in a suite. Asterisk starts writing
+# the file some way after it answers, and on a back-to-back call that delay was
+# measured at ~0.6s, which subtracts straight off the apparent onset. The
+# recording's zero is the recorder's, not the call's.
+#
+# So the lead-in is measured where it is actually defined - between the answer
+# and playback starting, which the sidecar reports - and the recording is used
+# for the thing it can prove: that the audio arrived whole.
+
+@pytest.mark.parametrize("lead_in", [0.0, 0.5, 1.5])
+def test_lead_in_is_honoured(lead_in: float) -> None:
     """Auto-answering handsets need a moment to open the audio path; without the
-    lead-in the first word is clipped. This measures that it is really there."""
+    lead-in the first word is clipped."""
+    _, body = api(
+        "POST", "/call", {"target": "991", "chime": "sound:chime", "lead_in": lead_in}
+    )
+    wait_idle()
+
+    record = history_for(body["call_id"])
+    waited = record["playback_latency"] - record["answer_latency"]
+    assert waited == pytest.approx(lead_in, abs=0.15), record
+
+
+def test_audio_arrives_whole_and_unclipped() -> None:
+    """The property the lead-in exists to protect.
+
+    With a lead-in longer than the far end takes to start recording, every last
+    sample of the clip is captured. A clipped first word shows up here as an
+    audible span shorter than the clip.
+    """
     reset_recording()
-    api("POST", "/call", {"target": "991", "chime": "sound:chime", "lead_in": 1.0})
+    api("POST", "/call", {"target": "991", "chime": "sound:chime", "lead_in": 1.5})
     wait_idle()
 
     audio = analyse()
+    source = source_clip("chime")
     assert audio["onset"] is not None, "no audio in the recording at all"
-    assert audio["onset"] == pytest.approx(1.0, abs=0.25)
-
-
-def test_shorter_lead_in_starts_sooner() -> None:
-    """Proves the onset tracks the setting rather than being a fixed artefact."""
-    reset_recording()
-    api("POST", "/call", {"target": "991", "chime": "sound:chime", "lead_in": 0.0})
-    wait_idle()
-    assert analyse()["onset"] < 0.4
+    assert audio["span"] == pytest.approx(source["span"], abs=0.15), (
+        f"heard {audio['span']:.2f}s of a {source['span']:.2f}s clip"
+    )
 
 
 def test_busy_target_returns_486() -> None:

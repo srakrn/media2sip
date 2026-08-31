@@ -56,7 +56,7 @@ entity, services and concurrency.
 | 1 — manual proof of concept | done ([write-up](docs/phase1-poc.md)) |
 | 2 — the sidecar | built ([README](sidecar/README.md)) |
 | 3, 4, 5 — integration, entity, concurrency | built ([docs](docs/integration.md)) |
-| 6 — hardening | done: 112 tests, per-call diagnostics, HACS + add-on packaging |
+| 6 — hardening | done: 114 tests, per-call diagnostics, HACS + add-on packaging |
 
 The definition of done is met: `tts.speak` at `media_player.working_zone` pages
 the handsets 1.86 s after the service call, with no clipped first word.

@@ -9,7 +9,7 @@
 > Home Assistant here is a **Container** install, so plain Docker is the target and the add-on
 > manifest is portability. **Phases 3, 4 and 5 are built** — see
 > [`docs/integration.md`](../docs/integration.md). The definition of done is met: `tts.speak`
-> against `media_player.working_zone` pages the handsets. **Phase 6 is complete** — 112 tests across
+> against `media_player.working_zone` pages the handsets. **Phase 6 is complete** — 114 tests across
 > three suites ([`docs/testing.md`](../docs/testing.md)), per-call diagnostics, and packaging for
 > both HACS and the add-on store. **All phases are done.**
 
@@ -270,14 +270,21 @@ media player semantics.
   On redaction: SIP credentials never leave the sidecar, and the media label is a content hash
   plus a host rather than a URL. A Home Assistant TTS proxy URL carries a token that grants access
   to the audio, and diagnostics files get shared around.
-- **Tests: done.** 112 across three suites ([`docs/testing.md`](../docs/testing.md)):
+- **Tests: done.** 114 across three suites ([`docs/testing.md`](../docs/testing.md)):
   47 integration-side against a mocked sidecar, covering every case named here; 52 sidecar-side
-  unit tests; and 13 end-to-end against a real Asterisk 22.10.1 in Docker — the same version the
+  unit tests; and 15 end-to-end against a real Asterisk 22.10.1 in Docker — the same version the
   production FreePBX runs, and needing nothing FreePBX-specific, exactly as predicted.
 
   The end-to-end suite records what the far end hears, so "did the page arrive" is measured rather
-  than assumed. It is what verifies the lead-in: page with `lead_in: 1.0` and the recording's first
-  sound really is at 1.0 s, silence before it.
+  than assumed: the received audio's audible span is compared against the source clip's, a round
+  trip that catches a page arriving clipped.
+
+  The lead-in is *not* measured from that recording, though the first version of the test tried to.
+  It passed alone and failed in CI, because Asterisk starts writing the file some way after it
+  answers — ~0.6 s on a back-to-back call — which subtracts straight off the apparent onset. The
+  recording's zero is the recorder's, not the call's. The lead-in is now asserted against the
+  sidecar's own `answer_latency` and `playback_latency`, which bracket it to about ten
+  milliseconds. Measure each thing where it is defined.
 
   Writing them found four defects that live testing had missed:
 

@@ -6,7 +6,7 @@ Three suites, deliberately separated by what they need to run.
 | --- | --- | --- | --- |
 | Integration | `tests/` | a Python venv | 47 |
 | Sidecar unit | `sidecar/tests/` | the sidecar image (ffmpeg) | 52 |
-| End-to-end | `sidecar/tests/integration/` | Docker, a real Asterisk | 13 |
+| End-to-end | `sidecar/tests/integration/` | Docker, a real Asterisk | 15 |
 
 Nothing anywhere depends on FreePBX, or on your PBX being reachable.
 
@@ -86,8 +86,24 @@ The last two exist so the call history can be checked for what it says about
 failures, not just successes.
 
 Recording is what makes this worth having. "Did the page arrive" is answered by
-measuring the far end's audio — level, and where sound starts — rather than by
-trusting that a call connected. That is how the lead-in is verified: page with
-`lead_in: 1.0` and the recording's first sound really is at 1.0 s, silent before.
-A call that connects and sends nothing is the failure this project most needs to
+measuring the far end's audio rather than by trusting that a call connected. A
+call that connects and sends nothing is the failure this project most needs to
 catch, and it is invisible from the SIP dialog alone.
+
+**Measure each thing where it is defined.** The obvious lead-in test — page with
+`lead_in: 1.0`, check the recording's first sound is at 1.0 s — passes alone and
+fails in a suite, which is exactly how it behaved in CI. Asterisk starts writing
+the file some way after it answers, and back-to-back that delay was measured at
+~0.6 s, subtracting straight off the apparent onset. The recording's zero is the
+recorder's, not the call's.
+
+So the lead-in is asserted against the sidecar's own `answer_latency` and
+`playback_latency`, which bracket it precisely, and the recording is used for what
+it can prove: that the audio arrived **whole**. That comparison is a round trip —
+the received audio's audible span against the source clip's, measured the same
+way — rather than against the clip's duration, since clips carry trailing silence
+and an intact page still sounds shorter than the file is long.
+
+`wait_idle()` waits for both sides, too. Waiting only for the sidecar lets a slow
+runner drop one test's recording on top of the next one's, because every test
+writes the same filename.
