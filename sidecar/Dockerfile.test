@@ -1,0 +1,9 @@
+# Test image: the sidecar plus a test runner. Same base, so ffmpeg and pjsua2 are
+# exactly the ones production uses.
+FROM pbx-page-sidecar:latest
+COPY requirements-test.txt /tmp/
+RUN pip install --no-cache-dir -r /tmp/requirements-test.txt
+COPY pytest.ini /app/
+COPY tests/ /app/tests/
+WORKDIR /app
+CMD ["python", "-m", "pytest"]

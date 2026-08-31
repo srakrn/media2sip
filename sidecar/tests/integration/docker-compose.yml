@@ -1,0 +1,45 @@
+# End-to-end stack: the sidecar against a real Asterisk.
+#
+# Nothing here depends on FreePBX, which is what makes it practical to run in CI.
+# Both containers sit on one bridge network with no NAT between them, so SDP
+# addresses are directly reachable and the test exercises SIP and RTP for real.
+name: pbx-page-e2e
+
+services:
+  asterisk:
+    image: andrius/asterisk:latest
+    container_name: pbx-page-e2e-asterisk
+    volumes:
+      - ./asterisk/pjsip.conf:/etc/asterisk/pjsip.conf:ro
+      - ./asterisk/extensions.conf:/etc/asterisk/extensions.conf:ro
+      - ./asterisk/logger.conf:/etc/asterisk/logger.conf:ro
+      - recordings:/recordings
+    command: ["asterisk", "-f", "-vvv"]
+
+  sidecar:
+    image: pbx-page-sidecar:latest
+    container_name: pbx-page-e2e-sidecar
+    depends_on: [asterisk]
+    environment:
+      SIP_USERNAME: "9901"
+      SIP_PASSWORD: "test-secret"
+      SIP_HOST: "asterisk"
+      SIP_PORT: "5060"
+      SIP_LOCAL_PORT: "5060"
+      LEAD_IN: "0.5"
+      LOG_LEVEL: "INFO"
+      # Short, so the never-answered case is testable without a long wait.
+      ANSWER_TIMEOUT: "5"
+    ports:
+      - "18080:8080"
+
+  # Reads the recording Asterisk made, so assertions can run on the host.
+  inspector:
+    image: pbx-page-sidecar:latest
+    container_name: pbx-page-e2e-inspector
+    volumes:
+      - recordings:/recordings
+    entrypoint: ["sleep", "infinity"]
+
+volumes:
+  recordings:

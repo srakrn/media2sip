@@ -1,0 +1,187 @@
+name: release
+
+# Publishing a GitHub release is the trigger. Everything else follows from it:
+# the image is built and pushed under the release's version, and the release
+# notes are filled in with what to install.
+#
+# HACS installs the integration from the release tag itself, so the sources at
+# that tag must already carry the right version. That is checked before anything
+# is published, and a release that fails the check is put back to draft rather
+# than left advertising an integration whose sidecar image does not exist.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag to (re)build, e.g. v0.2.0"
+        required: true
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  # Set the DOCKERHUB_NAMESPACE repository variable if your Docker Hub account is
+  # not named the same as the GitHub owner. It must match `image:` in
+  # pbx_page_sidecar/config.yaml.
+  NAMESPACE: ${{ vars.DOCKERHUB_NAMESPACE || github.repository_owner }}
+  IMAGE: pbx-page-sidecar
+
+jobs:
+  check:
+    name: versions agree
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.v.outputs.tag }}
+      version: ${{ steps.v.outputs.version }}
+      prerelease: ${{ steps.v.outputs.prerelease }}
+    steps:
+      - id: v
+        name: resolve the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${{ github.event.release.tag_name || github.event.inputs.tag }}"
+          version="${tag#v}"
+          prerelease=$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json isPrerelease -q .isPrerelease)
+          {
+            echo "tag=$tag"
+            echo "version=$version"
+            echo "prerelease=$prerelease"
+          } >> "$GITHUB_OUTPUT"
+
+      # Check out the tag, not the branch: this must verify what a user actually
+      # gets when HACS installs from this release.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.v.outputs.tag }}
+
+      - name: the tag and all three sources must say the same thing
+        run: ./scripts/versions.sh "${{ steps.v.outputs.version }}"
+
+  image:
+    name: build and push the sidecar image
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.check.outputs.tag }}
+
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - name: log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # A prerelease gets its version tag but must not move `latest`, or it lands
+      # on everyone who did not pin.
+      - id: tags
+        run: |
+          v="${{ needs.check.outputs.version }}"
+          hub="docker.io/${{ env.NAMESPACE }}/${{ env.IMAGE }}"
+          ghcr="ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE }}"
+          tags="$hub:$v"$'\n'"$ghcr:$v"
+          if [[ "${{ needs.check.outputs.prerelease }}" != "true" ]]; then
+            tags="$tags"$'\n'"$hub:latest"$'\n'"$ghcr:latest"
+          fi
+          {
+            echo "list<<EOF"
+            echo "$tags"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      # One multi-arch manifest, not an image per architecture: the add-on and
+      # plain Docker then pull exactly the same bytes.
+      - uses: docker/build-push-action@v6
+        with:
+          context: sidecar
+          platforms: linux/amd64,linux/arm64
+          push: true
+          provenance: false
+          tags: ${{ steps.tags.outputs.list }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: the pushed image must run and report this version
+        run: |
+          image="docker.io/${{ env.NAMESPACE }}/${{ env.IMAGE }}:${{ needs.check.outputs.version }}"
+          for platform in linux/amd64 linux/arm64; do
+            got=$(docker run --rm --platform "$platform" --entrypoint python "$image" \
+              -c 'import re,pathlib;print(re.search(r"VERSION = \"(.*)\"", pathlib.Path("/app/app/main.py").read_text()).group(1))')
+            echo "$platform reports $got"
+            test "$got" = "${{ needs.check.outputs.version }}"
+          done
+
+  notes:
+    name: fill in the release notes
+    needs: [check, image]
+    runs-on: ubuntu-latest
+    steps:
+      - name: say what to install
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.check.outputs.tag }}
+          V: ${{ needs.check.outputs.version }}
+        run: |
+          existing=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body -q .body)
+          header=$(cat <<EOF
+          The integration and the sidecar are released as a pair and are meant to be
+          run together. Update both.
+
+          **Integration** — update through HACS, then restart Home Assistant.
+
+          **Sidecar** — \`${{ env.NAMESPACE }}/${{ env.IMAGE }}:$V\`
+          (also \`ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE }}:$V\`,
+          linux/amd64 and linux/arm64), or update the **PBX Page Sidecar** add-on.
+
+          Pin the tag rather than using \`latest\`. The integration logs a warning if it
+          finds itself talking to a sidecar of a different version, so a half-finished
+          upgrade is visible rather than silent.
+
+          ---
+
+          EOF
+          )
+          printf '%s\n\n%s\n' "$header" "$existing" \
+            | gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --notes-file -
+
+  unpublish_on_failure:
+    name: put a failed release back to draft
+    needs: [check, image, notes]
+    if: failure() && github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      # A published release that has no image is worse than no release: HACS will
+      # offer the integration to everyone, paired with a sidecar they cannot pull.
+      - name: revert to draft and say why
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          note=$(cat <<EOF
+          > **This release failed to build and has been put back to draft.**
+          >
+          > Most often the version in the sources does not match the tag. Fix it on a
+          > branch with \`./scripts/bump-version.sh ${TAG#v}\`, push, move the tag to
+          > that commit, and publish again.
+          >
+          > See the failed run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+
+          EOF
+          )
+          existing=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body -q .body)
+          printf '%s\n\n%s\n' "$note" "$existing" \
+            | gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft --notes-file -

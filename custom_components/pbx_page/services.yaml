@@ -1,0 +1,45 @@
+page:
+  name: Page
+  description: >-
+    Play a chime or a static sound on one or more paging targets. For speech, call
+    tts.speak against the media player entity instead.
+  fields:
+    targets:
+      name: Targets
+      description: Paging target entities.
+      required: true
+      selector:
+        entity:
+          integration: pbx_page
+          domain: media_player
+          multiple: true
+    sound:
+      name: Sound
+      description: Name of a static sound held on the sidecar.
+      example: chime
+      selector:
+        text:
+    chime:
+      name: Chime
+      description: Sound played before the announcement.
+      example: chime
+      selector:
+        text:
+    text:
+      name: Text
+      description: >-
+        Not supported directly - speech needs a TTS engine. Use tts.speak against
+        the media player entity.
+      selector:
+        text:
+    priority:
+      name: Priority
+      description: >-
+        Urgent preempts whatever is playing and skips the queue. Use it for the
+        smoke, leak and siren chain, where the newest message is the one that matters.
+      default: normal
+      selector:
+        select:
+          options:
+            - normal
+            - urgent

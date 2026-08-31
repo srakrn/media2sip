@@ -1,0 +1,95 @@
+name: prepare release
+
+# Run this from the Actions tab with the version you want. It bumps all three
+# version declarations, commits, tags, and opens a **draft** release.
+#
+# Then read the notes and press Publish. Publishing is what triggers the actual
+# release, so this workflow deliberately stops short of it: the last step is
+# yours.
+#
+# Doing it by hand instead is fine - ./scripts/bump-version.sh, commit, tag,
+# push, then create the release in the UI. This just makes it hard to forget the
+# bump, which is the one step that breaks a release if skipped.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "New version, e.g. 0.2.0"
+        required: true
+      prerelease:
+        description: "Mark as a prerelease (does not move the `latest` image tag)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: refuse to release over an existing tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          v="${{ inputs.version }}"; v="${v#v}"
+          if git rev-parse "v$v" >/dev/null 2>&1; then
+            echo "tag v$v already exists. Pick a new version, or delete the tag first." >&2
+            exit 1
+          fi
+          echo "version=$v" >> "$GITHUB_ENV"
+
+      - name: bump every version declaration
+        run: ./scripts/bump-version.sh "$version"
+
+      # The release commit is pushed with GITHUB_TOKEN, which by design does not
+      # trigger other workflows - so nothing else will test it. Test it here.
+      - name: test before tagging
+        run: |
+          pip install "pytest-homeassistant-custom-component==0.13.346"
+          python -m pytest tests/
+          docker build -t pbx-page-sidecar:latest sidecar/
+          docker build -f sidecar/Dockerfile.test -t pbx-page-sidecar:test sidecar/
+          docker run --rm pbx-page-sidecar:test
+
+      - name: commit and tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # The bump is a no-op when the sources already carry this version, which
+          # is a legitimate way to re-cut a release that was never tagged.
+          if git diff --quiet; then
+            echo "sources already say $version; tagging the current commit"
+          else
+            git commit -am "release $version"
+          fi
+          git tag "v$version"
+          git push origin HEAD "v$version"
+
+      - name: open a draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "v$version" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "v$version" \
+            --generate-notes \
+            --draft \
+            ${{ inputs.prerelease && '--prerelease' || '' }}
+
+          {
+            echo "### Draft release v$version is ready"
+            echo
+            echo "Review it and press **Publish release** - that is what builds and pushes the image."
+            echo
+            echo "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/v$version"
+          } >> "$GITHUB_STEP_SUMMARY"

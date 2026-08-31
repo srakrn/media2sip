@@ -1,0 +1,62 @@
+# Copy this next to a .env file and run `docker compose up -d`.
+#
+# Unlike docker-compose.yml alongside it, this builds nothing: it pulls the
+# published image, so you do not need a checkout of this repository. Pin the tag
+# to the same version as the integration you installed through HACS - the two are
+# released as a pair, and the integration logs a warning if they disagree.
+
+services:
+  pbx-page-sidecar:
+    image: srakrn/pbx-page-sidecar:0.1.0
+    container_name: pbx-page-sidecar
+    restart: unless-stopped
+
+    # SIP and RTP both advertise an address, and a page group sends media to
+    # whatever the SDP says, so the container's address has to be the host's.
+    # On Docker Desktop or OrbStack, where host networking is unavailable or
+    # broken, see docker-compose.bridge.yml in the repository.
+    network_mode: host
+
+    environment:
+      # --- required: the one extension you created on the PBX ---
+      SIP_USERNAME: "9901"
+      SIP_PASSWORD: "${SIP_PASSWORD:?set SIP_PASSWORD in .env}"
+      SIP_HOST: "10.1.2.99"
+      SIP_PORT: "5060"
+
+      # The port the sidecar binds. Host networking is on, so pick one that does
+      # not collide with anything else on this machine.
+      SIP_LOCAL_PORT: "5062"
+      RTP_PORT_START: "20000"
+      RTP_PORT_COUNT: "100"
+
+      # Seconds between the handsets answering and playback starting. Not
+      # optional: auto-answering handsets need about a second to open the audio
+      # path, and too little clips the first word.
+      LEAD_IN: "1.0"
+
+      # Uncomment to require `Authorization: Bearer` on the control API. Leaving
+      # it unset is only acceptable on a private network, and the sidecar says so
+      # at startup.
+      # API_TOKEN: "${API_TOKEN}"
+
+      SIDECAR_PORT: "8080"
+      LOG_LEVEL: "INFO"
+
+    volumes:
+      # Your own WAVs, one per sound, referenced as `sound:<filename>`. Optional:
+      # built-in sounds ship in the image and are searched after these, so a name
+      # here overrides a built-in.
+      - ./sounds:/data/sounds:ro
+      # Transcoded clips, cached by content hash. Worth persisting so a restart
+      # does not re-transcode every announcement.
+      - pbx-page-cache:/data/cache
+
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+
+volumes:
+  pbx-page-cache:

@@ -1,0 +1,65 @@
+name: PBX Page Sidecar
+version: "0.1.0"
+slug: pbx_page_sidecar
+description: SIP user agent that pages PBX extensions on behalf of Home Assistant
+url: https://github.com/srakrn/pbx-ha-media/tree/main/sidecar
+arch:
+  - aarch64
+  - amd64
+init: false
+
+# Prebuilt, because the image compiles pjproject from source. Building that on a
+# Raspberry Pi would take the better part of an hour; the supervisor pulls
+# instead. Delete this line to make it build locally from build.yaml.
+#
+# The supervisor pulls `<image>:<version>` using the version above, so bumping
+# the add-on version is what selects the image - which is exactly the pairing we
+# want. It is a multi-arch manifest, so no {arch} substitution is needed.
+#
+# Change the namespace here if your Docker Hub account differs, and set the
+# DOCKERHUB_NAMESPACE repository variable to match.
+image: srakrn/pbx-page-sidecar
+
+# SIP and RTP both advertise an address, and a page group sends media to whatever
+# the SDP says. RTP is also a UDP range rather than a single port. Host networking
+# is the only sane choice.
+host_network: true
+
+ports:
+  8080/tcp: 8080
+ports_description:
+  8080/tcp: Control API used by the pbx_page integration
+
+# For your own sound files: drop WAVs in /share/pbx_page_sounds and set
+# sounds_dir to match. Built-in sounds ship in the image and always work.
+map:
+  - share:rw
+
+options:
+  sip_username: ""
+  sip_password: ""
+  sip_host: ""
+  sip_port: 5060
+  sip_local_port: 5062
+  rtp_port_start: 20000
+  rtp_port_count: 100
+  lead_in: 1.0
+  api_token: ""
+  log_level: INFO
+
+schema:
+  sip_username: str
+  sip_password: password
+  sip_host: str
+  sip_port: port
+  sip_local_port: port
+  rtp_port_start: port
+  rtp_port_count: int(1,1000)
+  lead_in: float(0,10)
+  answer_timeout: float(1,120)?
+  max_call_seconds: float(1,600)?
+  api_token: password?
+  sip_public_address: str?
+  sip_codecs: str?
+  sounds_dir: str?
+  log_level: list(DEBUG|INFO|WARNING|ERROR)

@@ -1,0 +1,36 @@
+services:
+  sidecar:
+    build: .
+    image: pbx-page-sidecar:latest
+    container_name: pbx-page-sidecar
+    restart: unless-stopped
+
+    # Host networking is the right answer on Linux: SIP and RTP both want to
+    # advertise a reachable address, and a page group sends media to whatever the
+    # SDP says. See ../docs/deployment.md for the bridged alternative.
+    network_mode: host
+
+    env_file: ../.env
+    environment:
+      SIP_USERNAME: "${SIP_EXTENSION}"
+      SIP_PASSWORD: "${SIP_SECRET}"
+      SIP_HOST: "${PBX_HOST}"
+      SIP_PORT: "${PBX_PORT}"
+      SIP_LOCAL_PORT: "${SIP_LOCAL_PORT:-5062}"
+      RTP_PORT_START: "${RTP_PORT_START:-20000}"
+      RTP_PORT_COUNT: "${RTP_PORT_COUNT:-100}"
+      SIDECAR_PORT: "${SIDECAR_PORT:-8080}"
+      LEAD_IN: "${LEAD_IN:-1.0}"
+      LOG_LEVEL: "${LOG_LEVEL:-INFO}"
+      SIP_LOG_LEVEL: "${SIP_LOG_LEVEL:-2}"
+      API_TOKEN: "${API_TOKEN:-}"
+      SIP_PUBLIC_ADDRESS: "${SIP_PUBLIC_ADDRESS:-}"
+
+    volumes:
+      # Your own clips. Built-in sounds ship in the image at /opt/pbx-page/sounds
+      # and are searched after these, so a name here overrides a built-in.
+      - ./sounds:/data/sounds:ro
+      - cache:/data/cache
+
+volumes:
+  cache:

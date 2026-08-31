@@ -1,0 +1,39 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  integration:
+    name: integration (mocked sidecar)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - run: pip install "pytest-homeassistant-custom-component==0.13.346"
+      - run: python -m pytest tests/
+
+  sidecar:
+    name: sidecar unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t pbx-page-sidecar:latest sidecar/
+      - run: docker build -f sidecar/Dockerfile.test -t pbx-page-sidecar:test sidecar/
+      - run: docker run --rm pbx-page-sidecar:test
+
+  e2e:
+    name: end-to-end (real Asterisk)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - run: pip install pytest
+      - run: docker build -t pbx-page-sidecar:latest sidecar/
+      - name: run the suite
+        run: PYTEST="python -m pytest" ./sidecar/tests/integration/run.sh

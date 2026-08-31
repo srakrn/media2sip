@@ -1,0 +1,8 @@
+.env
+phase1/baresip/accounts
+phase1/logs/
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+sidecar/.env

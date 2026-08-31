@@ -1,0 +1,60 @@
+configuration:
+  sip_username:
+    name: SIP extension
+    description: The extension you created on the PBX, e.g. 9901.
+  sip_password:
+    name: SIP secret
+    description: That extension's password.
+  sip_host:
+    name: PBX host
+    description: Address of the PBX, e.g. 10.1.2.99.
+  sip_port:
+    name: PBX SIP port
+    description: Usually 5060.
+  sip_local_port:
+    name: Local SIP port
+    description: >-
+      The port this add-on binds. Host networking is on, so pick something that
+      does not collide, e.g. 5062.
+  rtp_port_start:
+    name: First RTP port
+    description: Start of the UDP range used for audio.
+  rtp_port_count:
+    name: RTP port count
+    description: How many ports to reserve. A hundred is ample for paging.
+  lead_in:
+    name: Lead-in
+    description: >-
+      Seconds to wait after the handsets answer before playing. Auto-answering
+      handsets need about a second to open the audio path; set this too low and
+      the first word is clipped.
+  answer_timeout:
+    name: Answer timeout
+    description: Give up if the page group has not answered within this many seconds.
+  max_call_seconds:
+    name: Maximum call length
+    description: Hard cap on any one page. A guard rail, not a setting to tune.
+  api_token:
+    name: API token
+    description: >-
+      Optional. When set, the integration must present it. Leave empty only on a
+      private network.
+  sip_public_address:
+    name: Advertised address
+    description: >-
+      Only needed behind NAT against a PBX that does not do symmetric RTP. Leave
+      empty with host networking.
+  sip_codecs:
+    name: Codecs
+    description: >-
+      Comma-separated, in preference order. Default PCMU/8000/1,PCMA/8000/1,
+      which is what a typical page group negotiates.
+  sounds_dir:
+    name: Sounds directory
+    description: >-
+      Where your own WAV files live, e.g. /share/pbx_page_sounds. Built-in sounds
+      always work regardless.
+  log_level:
+    name: Log level
+network:
+  8080/tcp: Control API used by the pbx_page integration

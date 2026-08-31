@@ -1,0 +1,13 @@
+{
+  "domain": "pbx_page",
+  "name": "PBX Page",
+  "codeowners": [
+    "@srakrn"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/srakrn/pbx-ha-media",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/srakrn/pbx-ha-media/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

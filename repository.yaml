@@ -1,0 +1,9 @@
+# Makes this repository installable as a Home Assistant add-on repository.
+# Settings -> Add-ons -> Add-on Store -> ... -> Repositories -> add this URL.
+#
+# The same repository is also a HACS integration repository (hacs.json plus
+# custom_components/). The two mechanisms look at different files and do not
+# collide, which keeps both halves of the project versioned together.
+name: PBX Page
+url: https://github.com/srakrn/pbx-ha-media
+maintainer: srakrn <tanersirakorn@gmail.com>

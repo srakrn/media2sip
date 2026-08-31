@@ -1,0 +1,71 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to the sidecar",
+        "description": "The sidecar is the component that holds the SIP stack. Give its control API address.",
+        "data": {
+          "url": "Sidecar URL",
+          "token": "API token (optional)"
+        }
+      },
+      "target": {
+        "title": "Add a paging target",
+        "description": "One target is one extension the sidecar dials. {count} added so far.",
+        "data": {
+          "name": "Name",
+          "extension": "Paging extension",
+          "add_another": "Add another target"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not reach the sidecar. Check the URL and that the container is running.",
+      "no_accounts": "The sidecar has no SIP accounts configured.",
+      "duplicate_target": "That extension has already been added."
+    },
+    "abort": {
+      "already_configured": "This sidecar is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Paging options",
+        "data": {
+          "lead_in": "Lead-in",
+          "chime": "Default chime",
+          "policy": "Concurrency policy",
+          "global_lock": "Serialise across all targets"
+        },
+        "data_description": {
+          "lead_in": "How long to wait after the handsets answer before playing. Too short and the first word is clipped.",
+          "policy": "What to do when a page arrives while one is already playing.",
+          "global_lock": "Enable when targets share physical handsets."
+        }
+      }
+    }
+  },
+  "selector": {
+    "policy": {
+      "options": {
+        "queue": "Queue (serialise, drop oldest when full)",
+        "preempt": "Preempt (hang up and play the newest)",
+        "reject": "Reject (fail fast when busy)"
+      }
+    }
+  },
+  "services": {
+    "page": {
+      "name": "Page",
+      "description": "Play a chime or static sound on one or more paging targets.",
+      "fields": {
+        "targets": { "name": "Targets", "description": "Paging target entities." },
+        "sound": { "name": "Sound", "description": "Static sound held on the sidecar." },
+        "chime": { "name": "Chime", "description": "Sound played before the announcement." },
+        "text": { "name": "Text", "description": "Use tts.speak against the entity instead." },
+        "priority": { "name": "Priority", "description": "Urgent preempts and skips the queue." }
+      }
+    }
+  }
+}

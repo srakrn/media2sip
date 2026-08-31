@@ -1,0 +1,15 @@
+# Overlay for hosts without usable host networking (Docker Desktop, OrbStack).
+#
+#   docker compose -f docker-compose.yml -f docker-compose.bridge.yml up
+#
+# SIP signalling survives NAT because FreePBX honours rport/received. RTP survives
+# because FreePBX sets rtp_symmetric on extensions by default, so the PBX replies
+# to wherever our media actually comes from rather than to the SDP address. If your
+# PBX does not, set SIP_PUBLIC_ADDRESS to an address it can reach.
+services:
+  sidecar:
+    network_mode: bridge
+    ports:
+      - "${SIDECAR_PORT:-8080}:8080"
+      - "${SIP_LOCAL_PORT:-5062}:5062/udp"
+      - "${RTP_PORT_START:-20000}-20020:20000-20020/udp"
