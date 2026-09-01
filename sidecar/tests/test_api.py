@@ -218,3 +218,20 @@ def test_media_label_reaches_the_sip_layer(client) -> None:
     """So the history record can say what played without holding a URL token."""
     client.post("/call", json={"target": "991", "chime": "sound:chime"})
     assert client.stub.placed[0]["media_label"] == "sound:chime"
+
+
+def test_version_comes_from_the_build_not_the_source(monkeypatch) -> None:
+    """Nothing in the sidecar's source declares a version.
+
+    It is stamped into the image at build time, so there is no literal here to go
+    stale, and an unstamped build says so plainly instead of claiming a release.
+    """
+    import importlib
+
+    from app import main
+
+    monkeypatch.delenv("APP_VERSION", raising=False)
+    assert importlib.reload(main).VERSION == "dev"
+
+    monkeypatch.setenv("APP_VERSION", "1.2.3")
+    assert importlib.reload(main).VERSION == "1.2.3"

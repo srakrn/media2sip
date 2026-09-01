@@ -28,6 +28,7 @@ from .const import (
     ATTR_SOUND,
     ATTR_TARGETS,
     ATTR_TEXT,
+    DEV_VERSION,
     DOMAIN,
     PRIORITY_NORMAL,
     PRIORITY_URGENT,
@@ -118,6 +119,12 @@ async def _async_warn_on_version_mismatch(
     integration = await async_get_integration(hass, DOMAIN)
     ours = str(integration.version) if integration.version else None
     if not ours or not sidecar_version or ours == sidecar_version:
+        return
+    if sidecar_version == DEV_VERSION:
+        # A sidecar built from a working tree rather than a release. Its operator
+        # already knows it is unversioned; warning on every start would train them
+        # to ignore the message that matters.
+        _LOGGER.debug("sidecar reports an unreleased build; not comparing versions")
         return
     _LOGGER.warning(
         "version mismatch: integration %s is talking to sidecar %s. They are "

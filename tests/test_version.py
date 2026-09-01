@@ -35,3 +35,16 @@ async def test_unknown_sidecar_version_is_not_an_alarm(
     with caplog.at_level(logging.WARNING):
         await _async_warn_on_version_mismatch(hass, None)
     assert "version mismatch" not in caplog.text
+
+
+async def test_an_unreleased_sidecar_does_not_cry_wolf(
+    hass: HomeAssistant, enable_custom_integrations, caplog
+) -> None:
+    """A sidecar built from a working tree reports "dev" rather than a version.
+
+    Its operator already knows it is unversioned; warning every start would train
+    them to ignore the message that matters.
+    """
+    with caplog.at_level(logging.WARNING):
+        await _async_warn_on_version_mismatch(hass, "dev")
+    assert "version mismatch" not in caplog.text

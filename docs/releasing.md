@@ -6,16 +6,29 @@ version. That is not a convention to remember — it is enforced.
 ## Why it has to be enforced
 
 The two halves talk over a control API, and they are only ever tested together.
-Three places declare a version, and they are read by three different things:
 
-| Declared in | Read by |
-| --- | --- |
-| `custom_components/pbx_page/manifest.json` | HACS, when it installs from a GitHub release |
-| `pbx_page_sidecar/config.yaml` | the supervisor, which pulls `<image>:<version>` |
-| `sidecar/app/main.py` | `GET /health`, so the integration can compare |
-| `docker-compose.example.yml`, `installation.md` | the person copying a pinned image tag |
+**No version is hardcoded in any source file.** Two *metadata* files declare one,
+and they have to, because external systems read them straight out of the
+repository:
 
-The image is `srakrn/media2sip`, one multi-arch manifest on Docker Hub and GHCR.
+| Declared in | Read by | Why it cannot be derived |
+| --- | --- | --- |
+| `custom_components/pbx_page/manifest.json` | HACS | read from the tree at the release tag |
+| `pbx_page_sidecar/config.yaml` | the supervisor | it is what picks `<image>:<version>` |
+| `docker-compose.example.yml`, `installation.md` | whoever copies a pinned tag | it is documentation |
+
+The sidecar's own version is **stamped into the image at build time** — a
+`VERSION` build argument becomes `APP_VERSION` in the image, and `app/main.py`
+reads it. There is no literal in the source to go stale.
+
+An unstamped build — a working tree, a plain `docker compose build` — reports
+`dev`, which is the truth about it. The integration recognises that and stays
+quiet rather than warning about a mismatch on every start; training someone to
+ignore that warning would waste the one time it matters.
+
+`bump-version.sh` writes the two metadata files and the pinned doc tags.
+`versions.sh` checks them. The image is `srakrn/media2sip`, one multi-arch
+manifest on Docker Hub and GHCR.
 
 If those drift, a user runs an integration against a sidecar it was never tested
 with, and the symptom is a behaviour change with no clue that anything moved.
@@ -62,12 +75,13 @@ then create the release on that tag in the GitHub UI and publish it.
 
 ### What publishing does
 
-1. Checks out **the tag** and verifies it against all three sources — because
+1. Checks out **the tag** and verifies the metadata files against it — because
    that is what a user actually gets when HACS installs from this release.
 2. Builds one **multi-arch** image (`linux/amd64`, `linux/arm64`) and pushes it to
    Docker Hub and GHCR, tagged `0.2.0`, plus `latest` unless it is a prerelease.
 3. Runs the pushed image **on both architectures** and asserts each reports
-   `0.2.0` — cheap insurance against publishing a stale layer under a fresh tag.
+   `0.2.0` — which now also proves the build stamp was applied, not just that the
+   right layer was pushed.
 4. Prepends the install instructions to the release notes.
 
 Add-on users get the new image automatically, because the supervisor pulls

@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
+import os
 import secrets
 import uuid
 from pathlib import Path
@@ -23,7 +24,14 @@ from .media import MediaError, MediaResolver
 from .models import AccountHealth, CallRequest, CallResponse, Health
 from .sip import SipError, SipWorker
 
-VERSION = "0.2.0"
+# Stamped in at image build time (Dockerfile ARG -> ENV), never written here.
+# A literal in the source is one more thing to forget on release day, and a stale
+# one is worse than none: the integration compares versions to spot a
+# half-finished upgrade, and would be comparing against a lie.
+#
+# "dev" is honest for a build nobody stamped - a working tree, a local
+# `docker compose build` - and the integration knows not to cry mismatch at it.
+VERSION = os.environ.get("APP_VERSION", "dev")
 
 _LOGGER = logging.getLogger(__name__)
 

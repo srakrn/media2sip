@@ -112,6 +112,8 @@ jobs:
           push: true
           provenance: false
           tags: ${{ steps.tags.outputs.list }}
+          build-args: |
+            VERSION=${{ needs.check.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -120,7 +122,7 @@ jobs:
           image="docker.io/${{ env.NAMESPACE }}/${{ env.IMAGE }}:${{ needs.check.outputs.version }}"
           for platform in linux/amd64 linux/arm64; do
             got=$(docker run --rm --platform "$platform" --entrypoint python "$image" \
-              -c 'import re,pathlib;print(re.search(r"VERSION = \"(.*)\"", pathlib.Path("/app/app/main.py").read_text()).group(1))')
+              -c 'from app.main import VERSION; print(VERSION)')
             echo "$platform reports $got"
             test "$got" = "${{ needs.check.outputs.version }}"
           done

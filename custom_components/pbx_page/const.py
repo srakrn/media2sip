@@ -59,3 +59,6 @@ PRIORITY_NORMAL: Final = "normal"
 PRIORITY_URGENT: Final = "urgent"
 
 SOUND_PREFIX: Final = "sound:"
+
+# What the sidecar reports when its image was not stamped by a release build.
+DEV_VERSION: Final = "dev"

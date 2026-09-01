@@ -31,11 +31,6 @@ addon.write_text(
     re.sub(r'^version: ".*"$', f'version: "{version}"', addon.read_text(), count=1, flags=re.M)
 )
 
-main = pathlib.Path("sidecar/app/main.py")
-main.write_text(
-    re.sub(r'^VERSION = ".*"$', f'VERSION = "{version}"', main.read_text(), count=1, flags=re.M)
-)
-
 # The docs and the sample compose pin an image tag; keep them with the rest.
 for doc in (
     pathlib.Path("sidecar/docker-compose.example.yml"),

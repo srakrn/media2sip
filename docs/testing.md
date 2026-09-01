@@ -47,7 +47,10 @@ Pin the framework to the Home Assistant version you target;
 
 ### Three things that will bite you
 
-**Never hardcode the version in a test.** Use the `integration_version` fixture.
+**Never hardcode the version in a test.** Use the `integration_version` fixture,
+which reads the manifest. Nothing in either codebase declares a version literal —
+the sidecar's is stamped into its image at build time — so a test that writes one
+down is the only place it can go stale.
 The release workflow bumps the manifest before running the tests, so a hardcoded
 copy fails on every release — which is exactly how the first release attempt
 died, at the `test before tagging` step.

@@ -73,6 +73,11 @@ COPY app/ ./app/
 # there. /data/sounds stays available for the operator's own clips.
 COPY sounds/ /opt/pbx-page/sounds/
 
+# Stamped by the release workflow; "dev" for any other build, which is the
+# truth about a build nobody released.
+ARG VERSION=dev
+ENV APP_VERSION=${VERSION}
+
 ENV PYTHONUNBUFFERED=1 \
     SIDECAR_PORT=8080 \
     CACHE_DIR=/data/cache \
