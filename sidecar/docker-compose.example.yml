@@ -10,7 +10,7 @@
 
 services:
   pbx-page-sidecar:
-    image: srakrn/media2sip:0.2.0
+    image: srakrn/media2sip:0.2.1
     container_name: pbx-page-sidecar
     restart: unless-stopped
 

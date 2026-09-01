@@ -52,7 +52,7 @@ docker run -d --name pbx-page-sidecar --restart unless-stopped \
   -e SIP_USERNAME=9901 -e SIP_PASSWORD=secret -e SIP_HOST=10.1.2.99 \
   -e SIP_LOCAL_PORT=5062 -e LEAD_IN=1.0 \
   -v pbx-page-cache:/data/cache \
-  srakrn/media2sip:0.2.0
+  srakrn/media2sip:0.2.1
 ```
 
 Images are on Docker Hub as `srakrn/media2sip` and on GHCR as
