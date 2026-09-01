@@ -57,9 +57,9 @@ jobs:
         run: |
           pip install "pytest-homeassistant-custom-component==0.13.346"
           python -m pytest tests/
-          docker build -t pbx-page-sidecar:latest sidecar/
-          docker build -f sidecar/Dockerfile.test -t pbx-page-sidecar:test sidecar/
-          docker run --rm pbx-page-sidecar:test
+          docker build -t media2sip:latest sidecar/
+          docker build -f sidecar/Dockerfile.test -t media2sip:test sidecar/
+          docker run --rm media2sip:test
 
       - name: commit and tag
         run: |

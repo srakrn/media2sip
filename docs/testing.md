@@ -70,9 +70,9 @@ the sidecar image, so ffmpeg and pjsua2 are exactly the ones production uses.
 
 ```sh
 cd sidecar
-docker build -t pbx-page-sidecar:latest .
-docker build -f Dockerfile.test -t pbx-page-sidecar:test .
-docker run --rm pbx-page-sidecar:test
+docker build -t media2sip:latest .
+docker build -f Dockerfile.test -t media2sip:test .
+docker run --rm media2sip:test
 ```
 
 ## End-to-end suite

@@ -65,7 +65,7 @@ the handsets 1.86 s after the service call, with no clipped first word.
 
 ```sh
 ./.venv/bin/python -m pytest tests/          # integration, against a mocked sidecar
-docker run --rm pbx-page-sidecar:test        # sidecar unit
+docker run --rm media2sip:test        # sidecar unit
 ./sidecar/tests/integration/run.sh           # end-to-end against a real Asterisk
 ```
 

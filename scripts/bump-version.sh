@@ -35,6 +35,17 @@ main = pathlib.Path("sidecar/app/main.py")
 main.write_text(
     re.sub(r'^VERSION = ".*"$', f'VERSION = "{version}"', main.read_text(), count=1, flags=re.M)
 )
+
+# The docs and the sample compose pin an image tag; keep them with the rest.
+for doc in (
+    pathlib.Path("sidecar/docker-compose.example.yml"),
+    pathlib.Path("docs/installation.md"),
+):
+    if doc.is_file():
+        doc.write_text(
+            re.sub(r"srakrn/media2sip:[0-9][^\s\\]*",
+                   f"srakrn/media2sip:{version}", doc.read_text())
+        )
 print(f"set version to {version}")
 PY
 

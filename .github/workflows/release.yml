@@ -27,7 +27,7 @@ env:
   # not named the same as the GitHub owner. It must match `image:` in
   # pbx_page_sidecar/config.yaml.
   NAMESPACE: ${{ vars.DOCKERHUB_NAMESPACE || github.repository_owner }}
-  IMAGE: pbx-page-sidecar
+  IMAGE: media2sip
 
 jobs:
   check:

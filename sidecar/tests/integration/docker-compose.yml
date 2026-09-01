@@ -17,7 +17,7 @@ services:
     command: ["asterisk", "-f", "-vvv"]
 
   sidecar:
-    image: pbx-page-sidecar:latest
+    image: media2sip:latest
     container_name: pbx-page-e2e-sidecar
     depends_on: [asterisk]
     environment:
@@ -35,7 +35,7 @@ services:
 
   # Reads the recording Asterisk made, so assertions can run on the host.
   inspector:
-    image: pbx-page-sidecar:latest
+    image: media2sip:latest
     container_name: pbx-page-e2e-inspector
     volumes:
       - recordings:/recordings

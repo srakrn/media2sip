@@ -13,14 +13,19 @@ Three places declare a version, and they are read by three different things:
 | `custom_components/pbx_page/manifest.json` | HACS, when it installs from a GitHub release |
 | `pbx_page_sidecar/config.yaml` | the supervisor, which pulls `<image>:<version>` |
 | `sidecar/app/main.py` | `GET /health`, so the integration can compare |
+| `docker-compose.example.yml`, `installation.md` | the person copying a pinned image tag |
+
+The image is `srakrn/media2sip`, one multi-arch manifest on Docker Hub and GHCR.
 
 If those drift, a user runs an integration against a sidecar it was never tested
 with, and the symptom is a behaviour change with no clue that anything moved.
 
 Three things stop that:
 
-- `scripts/versions.sh` fails if the three disagree. **CI runs it on every push**,
-  so drift is caught long before release day.
+- `scripts/versions.sh` fails if they disagree, including the tags pinned in the
+  docs — left alone those would tell a new user to pull a sidecar older than the
+  integration they just installed. **CI runs it on every push**, so drift is
+  caught long before release day.
 - The release workflow runs it again against **the tag**, and publishes nothing if
   they disagree — putting the release back to draft rather than leaving it up.
 - At runtime the integration compares its own version with the sidecar's `/health`
@@ -99,6 +104,9 @@ GHCR needs nothing; the workflow's `GITHUB_TOKEN` covers it.
 `DOCKERHUB_NAMESPACE` to the right one, and change `image:` in
 `pbx_page_sidecar/config.yaml` to match. Those two must agree or the add-on will
 pull an image that does not exist.
+
+Nothing appears on Docker Hub until a release is **published**. `prepare release`
+only opens a draft, and a draft builds nothing — that is the point of it.
 
 Make the Docker Hub repository public on its first push, or add-on users will get
 an authentication error rather than an image.

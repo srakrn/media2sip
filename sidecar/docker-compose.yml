@@ -1,7 +1,7 @@
 services:
   sidecar:
     build: .
-    image: pbx-page-sidecar:latest
+    image: media2sip:latest
     container_name: pbx-page-sidecar
     restart: unless-stopped
 

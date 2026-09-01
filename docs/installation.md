@@ -52,11 +52,11 @@ docker run -d --name pbx-page-sidecar --restart unless-stopped \
   -e SIP_USERNAME=9901 -e SIP_PASSWORD=secret -e SIP_HOST=10.1.2.99 \
   -e SIP_LOCAL_PORT=5062 -e LEAD_IN=1.0 \
   -v pbx-page-cache:/data/cache \
-  srakrn/pbx-page-sidecar:0.1.0
+  srakrn/media2sip:0.2.0
 ```
 
-Images are on Docker Hub as `srakrn/pbx-page-sidecar` and on GHCR as
-`ghcr.io/srakrn/pbx-page-sidecar`, `linux/amd64` and `linux/arm64`.
+Images are on Docker Hub as `srakrn/media2sip` and on GHCR as
+`ghcr.io/srakrn/media2sip`, `linux/amd64` and `linux/arm64`.
 **Pin the tag** to the integration version rather than using `latest`.
 
 ### Check it before going further

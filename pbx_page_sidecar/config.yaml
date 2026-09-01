@@ -18,7 +18,7 @@ init: false
 #
 # Change the namespace here if your Docker Hub account differs, and set the
 # DOCKERHUB_NAMESPACE repository variable to match.
-image: srakrn/pbx-page-sidecar
+image: srakrn/media2sip
 
 # SIP and RTP both advertise an address, and a page group sends media to whatever
 # the SDP says. RTP is also a UDP range rather than a single port. Host networking

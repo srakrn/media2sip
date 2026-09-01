@@ -286,7 +286,7 @@ class SipWorker:
         # threadCnt = 0 is the whole concurrency design: pjsua2 creates no worker
         # threads, so this thread is the only one inside the library.
         ep_cfg.uaConfig.threadCnt = 0
-        ep_cfg.uaConfig.userAgent = "pbx-page-sidecar"
+        ep_cfg.uaConfig.userAgent = "media2sip"
         ep_cfg.logConfig.level = self.config.sip_log_level
         ep_cfg.logConfig.consoleLevel = self.config.sip_log_level
         # Narrowband end to end; no echo canceller and no VAD, because there is

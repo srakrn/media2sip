@@ -16,7 +16,7 @@ cleanup() {
 trap cleanup EXIT
 
 echo "building the sidecar image..."
-docker build -q -t pbx-page-sidecar:latest ../.. >/dev/null
+docker build -q -t media2sip:latest ../.. >/dev/null
 
 echo "bringing up asterisk + sidecar..."
 docker compose down -v >/dev/null 2>&1 || true

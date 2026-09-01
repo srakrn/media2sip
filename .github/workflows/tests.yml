@@ -21,9 +21,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: docker build -t pbx-page-sidecar:latest sidecar/
-      - run: docker build -f sidecar/Dockerfile.test -t pbx-page-sidecar:test sidecar/
-      - run: docker run --rm pbx-page-sidecar:test
+      - run: docker build -t media2sip:latest sidecar/
+      - run: docker build -f sidecar/Dockerfile.test -t media2sip:test sidecar/
+      - run: docker run --rm media2sip:test
 
   e2e:
     name: end-to-end (real Asterisk)
@@ -34,6 +34,6 @@ jobs:
         with:
           python-version: "3.14"
       - run: pip install pytest
-      - run: docker build -t pbx-page-sidecar:latest sidecar/
+      - run: docker build -t media2sip:latest sidecar/
       - name: run the suite
         run: PYTEST="python -m pytest" ./sidecar/tests/integration/run.sh
