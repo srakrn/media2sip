@@ -83,7 +83,10 @@ class CallSession:
     hangup_deadline: float = 0.0     # when to tear down after playback
     answer_deadline: float = 0.0     # when to give up waiting for an answer
 
-    playback_at: float = 0.0
+    playback_at: float = 0.0        # first playback, for the history record
+    playback_origin: float = 0.0    # shifted by pauses, for the hangup deadline
+    played: float = 0.0             # seconds heard so far, frozen while paused
+    paused: bool = False
     rtp: dict[str, int] = field(default_factory=dict)
 
     sip_code: int = 0
@@ -105,6 +108,8 @@ class CallSession:
             "elapsed": round(time.monotonic() - self.started_at, 3),
             "sip_code": self.sip_code,
             "sip_reason": self.sip_reason,
+            "paused": self.paused,
+            "media": self.media_label,
         }
 
     def as_history(self) -> dict:
@@ -237,6 +242,17 @@ class SipWorker:
 
     async def hangup(self, call_id: str) -> dict:
         return await self._submit("hangup", call_id=call_id)
+
+    async def replace_media(
+        self, call_id: str, clip: Path, duration: float, media_label: str = ""
+    ) -> dict:
+        return await self._submit(
+            "replace_media", call_id=call_id, clip=clip,
+            duration=duration, media_label=media_label,
+        )
+
+    async def set_paused(self, call_id: str, paused: bool) -> dict:
+        return await self._submit("set_paused", call_id=call_id, paused=paused)
 
     async def hangup_target(self, target: str) -> list[str]:
         return await self._submit("hangup_target", target=target)
@@ -456,6 +472,75 @@ class SipWorker:
         self._teardown(session, "requested")
         return session.as_dict()
 
+    def _cmd_replace_media(
+        self, call_id: str, clip: Path, duration: float, media_label: str
+    ) -> dict:
+        """Swap the audio on a call that is already up.
+
+        Not a new call. The handsets have already answered and the audio path is
+        open, so there is nothing to re-dial and **no lead-in to wait out** - the
+        new clip starts on the next frame. Re-originating instead would drop the
+        page group and make it answer again, which is audible.
+        """
+        session = self._sessions.get(call_id)
+        if session is None:
+            raise SipError(f"no such call: {call_id}", 404)
+
+        self._stop_player(session)
+        session.clip = clip
+        session.duration = duration
+        session.media_label = media_label or clip.stem
+        session.playback_started = False
+        session.played = 0.0
+        session.paused = False
+        session.hangup_deadline = 0.0
+
+        if session.media_ready:
+            self._start_playback(session)
+        else:
+            # Media is not up yet; the existing lead-in timer will start it.
+            session.playback_deadline = session.playback_deadline or (
+                time.monotonic() + session.lead_in
+            )
+        return session.as_dict()
+
+    def _cmd_set_paused(self, call_id: str, paused: bool) -> dict:
+        """Pause by disconnecting the player from the call, not by stopping RTP.
+
+        The conference bridge keeps sending silence, so the call stays up and the
+        far end sees no media timeout. A port nobody pulls from does not advance,
+        so the clip resumes where it stopped rather than skipping ahead.
+        """
+        session = self._sessions.get(call_id)
+        if session is None:
+            raise SipError(f"no such call: {call_id}", 404)
+        if session.player is None or not session.playback_started:
+            raise SipError(f"call {call_id} is not playing anything", 409)
+        if session.paused == paused:
+            return session.as_dict()
+
+        now = time.monotonic()
+        try:
+            if paused:
+                session.player.stopTransmit(session.audio_media)
+                session.played = now - session.playback_origin
+                session.paused = True
+                # Suspend the playback timer; max_call_seconds still applies, so
+                # a forgotten pause cannot hold the page group indefinitely.
+                session.hangup_deadline = 0.0
+                self._publish(ev.PLAYBACK_PAUSED, session)
+            else:
+                session.player.startTransmit(session.audio_media)
+                session.paused = False
+                session.playback_origin = now - session.played
+                session.hangup_deadline = (
+                    session.playback_origin + session.duration + _PLAYBACK_TAIL
+                )
+                self._publish(ev.PLAYBACK_RESUMED, session)
+        except pj.Error as err:
+            raise SipError(f"cannot {'pause' if paused else 'resume'}: {err.info()}") from err
+        return session.as_dict()
+
     def _cmd_hangup_target(self, target: str) -> list[str]:
         hung = []
         for session in list(self._sessions.values()):
@@ -525,7 +610,7 @@ class SipWorker:
 
     def _on_playback_eof(self, call_id: str) -> None:
         session = self._sessions.get(call_id)
-        if session is None or not session.playback_started:
+        if session is None or not session.playback_started or session.paused:
             return
         # Do not tear down inside the callback; pjsua2 is still inside the player.
         session.hangup_deadline = min(
@@ -548,6 +633,12 @@ class SipWorker:
                 and now >= session.playback_deadline
             ):
                 self._start_playback(session)
+            if session.paused:
+                # Only the hard cap applies while paused.
+                if now - session.started_at > self.config.max_call_seconds:
+                    _LOGGER.warning("call %s exceeded max_call_seconds while paused", session.call_id)
+                    self._teardown(session, "max_duration")
+                continue
             if session.hangup_deadline and now >= session.hangup_deadline:
                 self._teardown(session, "playback_complete")
                 continue
@@ -566,9 +657,14 @@ class SipWorker:
             self._teardown(session, "playback_failed")
             return
 
+        now = time.monotonic()
         session.player = player
         session.playback_started = True
-        session.playback_at = time.monotonic()
+        session.playback_origin = now
+        session.played = 0.0
+        session.paused = False
+        if not session.playback_at:
+            session.playback_at = now
         session.state = ev.PLAYBACK_STARTED
         # Backstop for onEof2. Normally the callback fires first and shortens this.
         session.hangup_deadline = time.monotonic() + session.duration + _PLAYBACK_TAIL

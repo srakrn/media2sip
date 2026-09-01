@@ -327,3 +327,83 @@ def test_history_media_label_is_not_a_url() -> None:
     _, history = api("GET", "/calls/history?limit=5")
     record = next(c for c in history if c["call_id"] == body["call_id"])
     assert record["media"] == "sound:chime"
+
+
+# -- pause and swap ------------------------------------------------------
+
+
+@pytest.fixture
+def long_clip():
+    """A clip with room to pause in the middle. Built here rather than shipped,
+    so the image is not carrying a test fixture."""
+    subprocess.run(
+        ["docker", "exec", "pbx-page-e2e-sidecar", "sh", "-c",
+         "ffmpeg -y -v error -f lavfi -i 'sine=frequency=660:duration=6' "
+         "-ac 1 -ar 8000 -acodec pcm_s16le /data/sounds/long.wav"],
+        check=True,
+    )
+    return "sound:long"
+
+
+def test_pause_holds_the_call_and_resumes_where_it_stopped(long_clip) -> None:
+    """Pause disconnects the player from the call rather than stopping RTP.
+
+    Two things have to be true, and neither is obvious: the call must survive the
+    pause (the far end must not see a media timeout), and the clip must not run
+    on while nobody is listening to it. The second is measured at the far end -
+    the recording carries the whole clip plus a silent gap, not a clip with a
+    hole punched in it.
+    """
+    reset_recording()
+    _, body = api("POST", "/call", {"target": "991", "media": long_clip, "lead_in": 0.5})
+    call_id = body["call_id"]
+
+    time.sleep(2.0)
+    assert api("POST", f"/call/{call_id}/pause", {"paused": True})[0] == 200
+
+    time.sleep(2.0)
+    _, health = api("GET", "/health")
+    live = [c for c in health["active_calls"] if c["call_id"] == call_id]
+    assert live, "the call was dropped while paused"
+    assert live[0]["paused"] is True
+
+    assert api("POST", f"/call/{call_id}/pause", {"paused": False})[0] == 200
+    wait_idle(timeout=40)
+
+    audio = analyse()
+    source = measure(
+        subprocess.run(
+            ["docker", "exec", "pbx-page-e2e-sidecar", "cat", "/data/sounds/long.wav"],
+            capture_output=True,
+        ).stdout
+    )
+    # Everything arrived, plus the silence we asked for. Had the clip run on
+    # while paused, the span would be shorter than the source, not longer.
+    assert audio["span"] > source["span"] + 1.0
+    assert audio["span"] < source["span"] + 4.0
+
+
+def test_pausing_a_call_that_plays_nothing_is_refused() -> None:
+    status, _ = api("POST", "/call/nope/pause", {"paused": True})
+    assert status >= 400
+
+
+def test_replace_swaps_the_clip_without_re_dialling(long_clip) -> None:
+    """One call, two clips. The handsets never answer twice."""
+    wait_idle()
+    _, first = api("POST", "/call", {"target": "991", "media": long_clip, "lead_in": 0.5})
+    time.sleep(1.5)
+
+    status, second = api(
+        "POST", "/call", {"target": "991", "media": "sound:chime", "policy": "replace"}
+    )
+    assert status == 200
+    assert second["replaced"] is True
+    assert second["call_id"] == first["call_id"]
+
+    wait_idle(timeout=30)
+    _, history = api("GET", "/calls/history?limit=10")
+    entries = [c for c in history if c["call_id"] == first["call_id"]]
+    assert len(entries) == 1, "a replace must not produce a second call"
+    assert entries[0]["media"] == "sound:chime"
+    assert entries[0]["audio_sent"] is True

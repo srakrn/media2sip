@@ -9,7 +9,7 @@
 > Home Assistant here is a **Container** install, so plain Docker is the target and the add-on
 > manifest is portability. **Phases 3, 4 and 5 are built** — see
 > [`docs/integration.md`](../docs/integration.md). The definition of done is met: `tts.speak`
-> against `media_player.working_zone` pages the handsets. **Phase 6 is complete** — 114 tests across
+> against `media_player.working_zone` pages the handsets. **Phase 6 is complete** — 137 tests across
 > three suites ([`docs/testing.md`](../docs/testing.md)), per-call diagnostics, and packaging for
 > both HACS and the add-on store. **All phases are done.**
 
@@ -211,6 +211,7 @@ One entity per paging target. Advertise exactly:
 - `TURN_ON` / `TURN_OFF` (soft enable and disable)
 - `SELECT_SOURCE` only if static sounds are exposed that way
 - `BROWSE_MEDIA` — **added after the fact**, see below
+- `PAUSE` / `PLAY` — **added after the fact**, see below
 
 Do not advertise `PAUSE`, `SEEK`, `VOLUME_SET`, or track navigation. For clips of a few seconds
 those are theatre, and advertising features the backend cannot honour breaks automations that
@@ -225,6 +226,17 @@ The gap had a concrete cost. Home Assistant's Media panel builds its player pick
 `MediaPlayerEntityFeature.BROWSE_MEDIA` and nothing else, so the entity simply never appeared
 there, and the only ways to page were a service call or an automation. That is not a trade-off
 anyone chose; it fell out of a rule applied too broadly.
+
+**`PAUSE` and `PLAY` followed, and only make sense because browsing came first.** For a
+two-second chime, pause really is theatre. But once someone can pick a track out of their media
+library, holding it is an ordinary thing to want — and pjsua2 can honour it honestly. Pause
+disconnects the player from the call rather than stopping the audio stream: the conference bridge
+keeps sending silence so the far end never sees a media timeout, and a port nobody pulls from does
+not advance, so the clip resumes exactly where it stopped. Both halves of that are measured at the
+far end in the end-to-end suite, because neither is obvious enough to take on trust.
+
+Still excluded, and for the original reason: `SEEK`, volume, and track navigation. The sidecar has
+no position control, no mixer and no notion of a playlist.
 
 `async_play_media`: resolve via `media_source` and `async_process_play_media_url` unless the id
 matches a static sound, then `POST /call`. Treat `announce: true` as ordinary playback, since
@@ -247,9 +259,21 @@ one that visibly breaks, and it gives you something to alert on.
 
 ## Phase 5: concurrency — **built**
 
-Queueing lives in the integration, where entity semantics are; the sidecar implements only
+Queueing lives in the integration, where entity semantics are; the sidecar implements `replace`,
 `reject` and `preempt`. `pbx_page.page` ships with a `priority` field, and `urgent` forces preempt
 for the alarm chain.
+
+**`replace` was added later and is now the default.** Playing something new swaps the audio on the
+call that is already up: it starts on the next frame, needs no lead-in because the handsets are
+already listening, and keeps the same call id. `preempt` — hang up and re-dial — turns out to be
+the wrong tool for "play this instead", because it drops the page group and makes it answer again,
+which is both slower and audible. It stays for the alarm chain, where a genuinely fresh call is
+what you want.
+
+This changed the default from `queue`, which is a real behaviour change: a second announcement now
+cuts off the first rather than waiting behind it. That is what a media player does everywhere else
+in Home Assistant, and it is what was asked for. `queue` remains for announcement-heavy setups
+where being cut off mid-word would be worse than waiting.
 
 
 Per entity:
@@ -281,9 +305,9 @@ media player semantics.
   On redaction: SIP credentials never leave the sidecar, and the media label is a content hash
   plus a host rather than a URL. A Home Assistant TTS proxy URL carries a token that grants access
   to the audio, and diagnostics files get shared around.
-- **Tests: done.** 114 across three suites ([`docs/testing.md`](../docs/testing.md)):
-  47 integration-side against a mocked sidecar, covering every case named here; 52 sidecar-side
-  unit tests; and 15 end-to-end against a real Asterisk 22.10.1 in Docker — the same version the
+- **Tests: done.** 137 across three suites ([`docs/testing.md`](../docs/testing.md)):
+  61 integration-side against a mocked sidecar, covering every case named here; 58 sidecar-side
+  unit tests; and 18 end-to-end against a real Asterisk 22.10.1 in Docker — the same version the
   production FreePBX runs, and needing nothing FreePBX-specific, exactly as predicted.
 
   The end-to-end suite records what the far end hears, so "did the page arrive" is measured rather

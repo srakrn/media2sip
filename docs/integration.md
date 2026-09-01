@@ -15,11 +15,18 @@ permanently unavailable. Then add paging targets one at a time.
 
 ## The entity
 
-Advertises exactly `PLAY_MEDIA`, `STOP`, `TURN_ON`, `TURN_OFF`, `BROWSE_MEDIA`,
-and `SELECT_SOURCE` when the sidecar has static sounds —
-`supported_features = 138112`. Not `PAUSE`, `SEEK`, `VOLUME_SET`, or track
-navigation: for clips of a few seconds those are theatre, and advertising
-features the backend cannot honour breaks automations that trust them.
+Advertises `PLAY_MEDIA`, `STOP`, `TURN_ON`, `TURN_OFF`, `BROWSE_MEDIA`, `PAUSE`,
+`PLAY`, and `SELECT_SOURCE` when the sidecar has static sounds. Not `SEEK`,
+volume, or track navigation: the sidecar has no position control, no mixer and no
+notion of a playlist, and advertising features the backend cannot honour breaks
+automations that trust them.
+
+**Pause** works by disconnecting the player from the call, not by stopping the
+audio stream. The call stays up — the far end keeps receiving silence, so it
+never sees a media timeout — and a port nobody pulls from does not advance, so
+the clip resumes exactly where it stopped. The page group stays seized while
+paused, so `MAX_CALL_SECONDS` still applies; a forgotten pause cannot hold the
+handsets forever.
 
 `BROWSE_MEDIA` is in the list because it is genuinely honoured, and because the
 **Media panel's player picker filters on that feature alone** — without it the
@@ -29,7 +36,8 @@ Browsing offers the sidecar's own sounds first (already transcoded, played with
 no fetch), then everything `media_source` has, filtered to audio. Nothing stops
 you picking a half-hour album; `MAX_CALL_SECONDS` on the sidecar cuts the page
 off at sixty seconds by default, which is the guard rail rather than a promise
-that it will sound sensible.
+that it will sound sensible. Raise it if you genuinely want long playback — and
+note it is also what bounds a paused call.
 
 | Situation | State |
 | --- | --- |
@@ -82,9 +90,15 @@ data:
 
 Set per entry in the options flow. Per entity:
 
-- **`queue`** (default) — serialise, bounded at three, drop the oldest on overflow.
-  The dropped caller is told, rather than left waiting on a page that will never
-  happen.
+- **`replace`** (default) — playing something new swaps the audio on the call
+  that is already up. It starts on the next frame, with **no re-dial and no
+  lead-in**, because the handsets are already listening; re-originating instead
+  would drop the page group and make it answer again, which is both slower and
+  audible. This is what a media player does everywhere else in Home Assistant.
+- **`queue`** — serialise, bounded at three, drop the oldest on overflow. The
+  dropped caller is told, rather than left waiting on a page that will never
+  happen. Prefer this where announcements matter more than immediacy and one
+  page cutting off another mid-word would be wrong.
 - **`preempt`** — hang up and re-originate. **Use this for the smoke, leak and
   siren chain**, where the newest message is the one that matters. A routine
   announcement must never delay an alarm. `priority: urgent` forces it per call.
@@ -96,7 +110,11 @@ enable it when targets share physical handsets. Inferring which targets overlap 
 guesswork the user can simply tell us.
 
 Queueing lives here rather than in the sidecar because it needs entity-level
-semantics; the sidecar only knows `reject` and `preempt`.
+semantics; the sidecar knows `replace`, `preempt` and `reject`.
+
+> **Changed in 0.3.0.** The default was `queue`. It is now `replace`, so playing
+> something new interrupts what is playing instead of waiting behind it. Set the
+> policy back to `queue` in the options flow if the old behaviour suited you.
 
 ## Options
 

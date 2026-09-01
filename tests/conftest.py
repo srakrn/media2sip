@@ -50,11 +50,13 @@ class FakeSidecar:
         self.place_error: Exception | None = None
         self.next_call_id = "call-1"
         self.auto_disconnect = True
+        self.paused = False
 
         self.connected = True
         self.sounds: list[str] = ["chime", "evacuate"]
         self.lead_in = 1.0
         self.sidecar_version = "test"
+        self.in_flight: str | None = None
         self.accounts: dict[str, dict] = {
             "9901": {"account_id": "9901", "uri": "sip:9901@pbx", "registered": True,
                      "code": 200, "reason": "OK", "since": 0.0}
@@ -96,7 +98,8 @@ class FakeSidecar:
         if self.place_error is not None:
             raise self.place_error
         self.calls.append(payload)
-        call_id = self.next_call_id
+        replacing = payload.get("policy") == "replace" and self.in_flight is not None
+        call_id = self.in_flight if replacing else self.next_call_id
         result = {
             "call_id": call_id,
             "target": payload["target"],
@@ -108,6 +111,12 @@ class FakeSidecar:
             "cached": True,
             "preempted": [],
         }
+        result["replaced"] = replacing
+        if replacing:
+            self.emit("playback_started", call_id=call_id, target=payload["target"])
+            return result
+
+        self.in_flight = call_id
         self.emit("calling", call_id=call_id, target=payload["target"])
         if self.auto_disconnect:
             # Model a healthy page: confirmed, played, hung up.
@@ -115,14 +124,21 @@ class FakeSidecar:
                 await asyncio.sleep(0)
                 self.emit("confirmed", call_id=call_id, target=payload["target"])
                 self.emit("playback_started", call_id=call_id, target=payload["target"])
+                self.in_flight = None
                 self.emit("disconnected", call_id=call_id, target=payload["target"],
                           reason="playback_complete", sip_code=200, sip_reason="OK")
 
             asyncio.get_running_loop().create_task(finish())
         return result
 
+    async def async_set_paused(self, call_id: str, paused: bool) -> dict:
+        self.paused = paused
+        self.emit("playback_paused" if paused else "playback_resumed", call_id=call_id)
+        return {"call_id": call_id, "paused": paused}
+
     async def async_hangup(self, call_id: str) -> dict:
         self.hangups.append(call_id)
+        self.in_flight = None
         self.emit("disconnected", call_id=call_id, reason="requested",
                   sip_code=200, sip_reason="OK")
         return {"call_id": call_id}

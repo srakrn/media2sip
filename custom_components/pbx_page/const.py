@@ -22,14 +22,19 @@ CONF_POLICY: Final = "policy"
 CONF_GLOBAL_LOCK: Final = "global_lock"
 
 DEFAULT_LEAD_IN: Final = 1.0
-DEFAULT_POLICY: Final = "queue"
 
 # -- concurrency ----------------------------------------------------------
 
+POLICY_REPLACE: Final = "replace"
 POLICY_QUEUE: Final = "queue"
 POLICY_PREEMPT: Final = "preempt"
 POLICY_REJECT: Final = "reject"
-POLICIES: Final = [POLICY_QUEUE, POLICY_PREEMPT, POLICY_REJECT]
+POLICIES: Final = [POLICY_REPLACE, POLICY_QUEUE, POLICY_PREEMPT, POLICY_REJECT]
+
+# Playing something new replaces what is playing, which is what a media player
+# does everywhere else in Home Assistant. Announcement-heavy setups that would
+# rather not have one page cut off another can switch to `queue`.
+DEFAULT_POLICY: Final = POLICY_REPLACE
 
 # Bounded, and small. These are announcements of a few seconds; a deep queue just
 # means playing something the listener has stopped caring about.
@@ -42,6 +47,8 @@ EVENT_EARLY: Final = "early"
 EVENT_CONFIRMED: Final = "confirmed"
 EVENT_PLAYBACK_STARTED: Final = "playback_started"
 EVENT_PLAYBACK_FINISHED: Final = "playback_finished"
+EVENT_PLAYBACK_PAUSED: Final = "playback_paused"
+EVENT_PLAYBACK_RESUMED: Final = "playback_resumed"
 EVENT_DISCONNECTED: Final = "disconnected"
 EVENT_REGISTERED: Final = "registered"
 EVENT_UNREGISTERED: Final = "unregistered"

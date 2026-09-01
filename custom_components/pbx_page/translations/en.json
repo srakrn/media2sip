@@ -49,6 +49,7 @@
   "selector": {
     "policy": {
       "options": {
+        "replace": "Replace (swap instantly, no re-dial)",
         "queue": "Queue (serialise, drop oldest when full)",
         "preempt": "Preempt (hang up and play the newest)",
         "reject": "Reject (fail fast when busy)"

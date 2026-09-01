@@ -109,6 +109,9 @@ class PbxPageClient:
     async def async_place_call(self, **payload: Any) -> dict:
         return await self._request("POST", "/call", json=payload)
 
+    async def async_set_paused(self, call_id: str, paused: bool) -> dict:
+        return await self._request("POST", f"/call/{call_id}/pause", json={"paused": paused})
+
     async def async_hangup(self, call_id: str) -> dict:
         return await self._request("DELETE", f"/call/{call_id}")
 

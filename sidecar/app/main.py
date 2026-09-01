@@ -21,7 +21,7 @@ from fastapi.responses import JSONResponse
 from . import config as config_module
 from . import events as ev
 from .media import MediaError, MediaResolver
-from .models import AccountHealth, CallRequest, CallResponse, Health
+from .models import AccountHealth, CallRequest, CallResponse, Health, PauseRequest
 from .sip import SipError, SipWorker
 
 # Stamped in at image build time (Dockerfile ARG -> ENV), never written here.
@@ -157,6 +157,23 @@ async def place_call(request: CallRequest) -> CallResponse:
                 detail=f"{request.target} already has a call in flight",
                 headers={"X-Call-Id": in_flight[0]["call_id"]},
             )
+        if request.policy == "replace":
+            # The handsets are already listening. Swapping the audio starts on
+            # the next frame; re-dialling would drop them and make them answer
+            # again, which is both slower and audible.
+            result = await sidecar.sip.replace_media(
+                call_id=in_flight[0]["call_id"],
+                clip=clip.path,
+                duration=clip.duration,
+                media_label=clip.label,
+            )
+            return CallResponse(
+                **{k: result[k] for k in
+                   ("call_id", "target", "account_id", "state", "duration", "lead_in")},
+                media=clip.source,
+                cached=clip.cached,
+                replaced=True,
+            )
         preempted = await sidecar.sip.hangup_target(request.target)
         _LOGGER.info("preempted %s on %s", preempted, request.target)
 
@@ -181,6 +198,16 @@ async def place_call(request: CallRequest) -> CallResponse:
 @app.delete("/call/{call_id}", dependencies=[Depends(require_token)])
 async def hangup(call_id: str) -> dict:
     return await sidecar.sip.hangup(call_id)
+
+
+@app.post("/call/{call_id}/pause", dependencies=[Depends(require_token)])
+async def pause(call_id: str, request: PauseRequest) -> dict:
+    """Pause or resume playback without dropping the call.
+
+    The page group stays seized while paused, so `MAX_CALL_SECONDS` still applies
+    - a forgotten pause cannot hold the handsets indefinitely.
+    """
+    return await sidecar.sip.set_paused(call_id, request.paused)
 
 
 @app.get("/calls", dependencies=[Depends(require_token)])

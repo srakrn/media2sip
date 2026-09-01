@@ -34,6 +34,7 @@ curl -X POST localhost:8080/call -H 'content-type: application/json' -d '{
 | `GET /health` | Registration state per account, active calls, available sounds, pinned codecs. `status` is `degraded` when any account is unregistered. |
 | `POST /call` | Place a page. Returns a `call_id`. Media is resolved *before* the call is placed, so a bad clip is a `400` rather than handsets answering to silence. |
 | `DELETE /call/{id}` | Hang up. |
+| `POST /call/{id}/pause` | `{"paused": true|false}`. Holds the clip without dropping the call. |
 | `GET /calls` | Calls in flight. |
 | `GET /calls/history?limit=` | Recent finished calls: target, SIP reason code, latency split into the PBX's part and ours, and whether any RTP actually went down the wire. |
 | `GET /sounds` | Static sounds, from your volume and the ones built into the image. |
@@ -55,9 +56,15 @@ network.
 
 ## Concurrency
 
-`policy` is `reject` (default, returns `409`) or `preempt` (hangs up whatever is
-on that target and re-originates). **Queueing is deliberately not here** — it needs
-entity-level semantics and belongs in the integration.
+`policy` is `reject` (default, returns `409`), `replace`, or `preempt`.
+
+`replace` swaps the audio on the call that is already up: it starts on the next
+frame, needs no lead-in because the handsets are already listening, and keeps the
+same `call_id`. `preempt` hangs up and re-originates, which drops the page group
+and makes it answer again — use it only when you want a genuinely fresh call.
+
+**Queueing is deliberately not here** — it needs entity-level semantics and
+belongs in the integration.
 
 ## How a page actually works
 

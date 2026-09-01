@@ -20,6 +20,8 @@ EARLY = "early"
 CONFIRMED = "confirmed"
 PLAYBACK_STARTED = "playback_started"
 PLAYBACK_FINISHED = "playback_finished"
+PLAYBACK_PAUSED = "playback_paused"
+PLAYBACK_RESUMED = "playback_resumed"
 DISCONNECTED = "disconnected"
 
 # Account lifecycle.

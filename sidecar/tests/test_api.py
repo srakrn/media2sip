@@ -27,7 +27,10 @@ class StubSip:
         self.registered = True
         self.active: list[dict] = []
         self.recorded: list[dict] = []
+        self.replaced: list[dict] = []
+        self.paused: list[tuple[str, bool]] = []
         self.place_error: Exception | None = None
+        self.pause_error: Exception | None = None
 
     def registration_state(self) -> dict[str, dict]:
         return {
@@ -50,6 +53,18 @@ class StubSip:
                 "duration": duration, "lead_in": lead_in or 1.0, "sip_code": 0, "sip_reason": ""}
         self.active.append(call)
         return call
+
+    async def replace_media(self, call_id: str, clip: Path, duration: float,
+                            media_label: str = "") -> dict:
+        self.replaced.append({"call_id": call_id, "clip": clip, "duration": duration})
+        call = next(c for c in self.active if c["call_id"] == call_id)
+        return {**call, "duration": duration}
+
+    async def set_paused(self, call_id: str, paused: bool) -> dict:
+        if self.pause_error is not None:
+            raise self.pause_error
+        self.paused.append((call_id, paused))
+        return {"call_id": call_id, "paused": paused}
 
     async def hangup(self, call_id: str) -> dict:
         self.hungup.append(call_id)
@@ -235,3 +250,50 @@ def test_version_comes_from_the_build_not_the_source(monkeypatch) -> None:
 
     monkeypatch.setenv("APP_VERSION", "1.2.3")
     assert importlib.reload(main).VERSION == "1.2.3"
+
+
+def test_replace_swaps_audio_on_the_live_call(client) -> None:
+    """No new call: the handsets are already listening, so re-dialling would
+    only drop them and make them answer again."""
+    first = client.post("/call", json={"target": "991", "chime": "sound:chime"}).json()
+    second = client.post(
+        "/call", json={"target": "991", "chime": "sound:chime", "policy": "replace"}
+    )
+    assert second.status_code == 200
+    body = second.json()
+    assert body["replaced"] is True
+    assert body["call_id"] == first["call_id"]
+    assert client.stub.hungup == []
+
+
+def test_replace_with_nothing_in_flight_places_a_call(client) -> None:
+    response = client.post(
+        "/call", json={"target": "991", "chime": "sound:chime", "policy": "replace"}
+    )
+    assert response.status_code == 200
+    assert response.json()["replaced"] is False
+    assert len(client.stub.placed) == 1
+
+
+def test_replace_still_validates_the_media_first(client) -> None:
+    client.post("/call", json={"target": "991", "chime": "sound:chime"})
+    response = client.post(
+        "/call", json={"target": "991", "chime": "sound:nope", "policy": "replace"}
+    )
+    assert response.status_code == 400
+    assert client.stub.replaced == []
+
+
+def test_pause_and_resume(client) -> None:
+    call_id = client.post("/call", json={"target": "991", "chime": "sound:chime"}).json()["call_id"]
+    assert client.post(f"/call/{call_id}/pause", json={"paused": True}).status_code == 200
+    assert client.stub.paused == [(call_id, True)]
+    assert client.post(f"/call/{call_id}/pause", json={"paused": False}).status_code == 200
+    assert client.stub.paused[-1] == (call_id, False)
+
+
+def test_pause_needs_a_call(client) -> None:
+    from app.sip import SipError
+
+    client.stub.pause_error = SipError("no such call: nope", 404)
+    assert client.post("/call/nope/pause", json={"paused": True}).status_code == 409

@@ -46,8 +46,11 @@ from .const import (
     EVENT_EARLY,
     EVENT_CALLING,
     EVENT_PLAYBACK_STARTED,
+    EVENT_PLAYBACK_PAUSED,
+    EVENT_PLAYBACK_RESUMED,
     POLICY_PREEMPT,
     POLICY_QUEUE,
+    POLICY_REPLACE,
     POLICY_REJECT,
     QUEUE_DEPTH,
     SOUND_PREFIX,
@@ -118,6 +121,7 @@ class PbxPageMediaPlayer(MediaPlayerEntity):
         self._enabled = True
         self._call_id: str | None = None
         self._call_state: str | None = None
+        self._paused = False
         self._last_error: str | None = None
 
         self._pending_finish: asyncio.Future | None = None
@@ -158,6 +162,12 @@ class PbxPageMediaPlayer(MediaPlayerEntity):
             # which filters on exactly this feature. Without it the entity is
             # reachable only from services and automations.
             | MediaPlayerEntityFeature.BROWSE_MEDIA
+            # Pause is honoured by disconnecting the player from the call rather
+            # than stopping RTP: the call stays up, the clip does not advance,
+            # and it resumes where it stopped. Worth having now that browsing can
+            # put something longer than a chime down the line.
+            | MediaPlayerEntityFeature.PAUSE
+            | MediaPlayerEntityFeature.PLAY
         )
         if self._client.sounds:
             features |= MediaPlayerEntityFeature.SELECT_SOURCE
@@ -180,7 +190,7 @@ class PbxPageMediaPlayer(MediaPlayerEntity):
         if self._call_state in (EVENT_CALLING, EVENT_EARLY, EVENT_CONFIRMED):
             return MediaPlayerState.BUFFERING
         if self._call_state == EVENT_PLAYBACK_STARTED:
-            return MediaPlayerState.PLAYING
+            return MediaPlayerState.PAUSED if self._paused else MediaPlayerState.PLAYING
         return MediaPlayerState.IDLE
 
     @property
@@ -193,6 +203,7 @@ class PbxPageMediaPlayer(MediaPlayerEntity):
             "extension": self._extension,
             "call_id": self._call_id,
             "queued": len(self._queue),
+            "paused": self._paused,
             "policy": self._policy,
             "last_error": self._last_error,
         }
@@ -220,6 +231,26 @@ class PbxPageMediaPlayer(MediaPlayerEntity):
         self._drain_queue(HomeAssistantError(f"{self.entity_id} is turned off"))
         await self.async_media_stop()
         self.async_write_ha_state()
+
+    async def async_media_pause(self) -> None:
+        """Hold the clip without dropping the call.
+
+        The page group stays seized meanwhile, so the sidecar's max call length
+        still applies - a forgotten pause cannot hold the handsets forever.
+        """
+        await self._async_set_paused(True)
+
+    async def async_media_play(self) -> None:
+        """Resume where the clip stopped."""
+        await self._async_set_paused(False)
+
+    async def _async_set_paused(self, paused: bool) -> None:
+        if self._call_id is None:
+            raise HomeAssistantError(f"{self.entity_id} is not playing anything")
+        try:
+            await self._client.async_set_paused(self._call_id, paused)
+        except SidecarError as err:
+            raise HomeAssistantError(f"cannot change playback: {err}") from err
 
     async def async_media_stop(self) -> None:
         if self._call_id is None:
@@ -346,6 +377,15 @@ class PbxPageMediaPlayer(MediaPlayerEntity):
         page = _Page(media=media, chime=chime or self._options.get(CONF_CHIME), urgent=urgent)
 
         policy = POLICY_PREEMPT if urgent else self._policy
+
+        if policy == POLICY_REPLACE and self._call_id is not None:
+            # Swap the audio on the call that is already up. It starts on the
+            # next frame, with no re-dial and no lead-in, because the handsets
+            # are already listening. The call id does not change, so the queue
+            # worker still holding this call stays correct.
+            await self._replace(page)
+            return
+
         if policy == POLICY_REJECT and (self._call_id is not None or self._queue):
             raise HomeAssistantError(f"{self.entity_id} is busy")
         if policy == POLICY_PREEMPT:
@@ -362,6 +402,32 @@ class PbxPageMediaPlayer(MediaPlayerEntity):
         self.async_write_ha_state()
 
         await page.done
+
+    async def _replace(self, page: _Page) -> None:
+        try:
+            result = await self._client.async_place_call(**self._payload(page, "replace"))
+        except SidecarError as err:
+            self._last_error = str(err)
+            self.async_write_ha_state()
+            raise HomeAssistantError(f"cannot replace what is playing: {err}") from err
+        self._call_id = result["call_id"]
+        self._paused = False
+        self._last_error = None
+        self.async_write_ha_state()
+
+    def _payload(self, page: _Page, policy: str) -> dict[str, Any]:
+        payload: dict[str, Any] = {
+            "target": self._extension,
+            "media": page.media,
+            "policy": policy,
+        }
+        if page.chime:
+            payload["chime"] = (
+                page.chime if page.chime.startswith(SOUND_PREFIX) else f"{SOUND_PREFIX}{page.chime}"
+            )
+        if (lead_in := self._options.get(CONF_LEAD_IN)) is not None:
+            payload["lead_in"] = lead_in
+        return payload
 
     # -- queue worker ----------------------------------------------------
 
@@ -399,17 +465,7 @@ class PbxPageMediaPlayer(MediaPlayerEntity):
             await self._place_locked(page)
 
     async def _place_locked(self, page: _Page) -> None:
-        payload: dict[str, Any] = {
-            "target": self._extension,
-            "media": page.media,
-            "policy": "preempt" if page.urgent else "reject",
-        }
-        if page.chime:
-            payload["chime"] = (
-                page.chime if page.chime.startswith(SOUND_PREFIX) else f"{SOUND_PREFIX}{page.chime}"
-            )
-        if (lead_in := self._options.get(CONF_LEAD_IN)) is not None:
-            payload["lead_in"] = lead_in
+        payload = self._payload(page, "preempt" if page.urgent else "reject")
 
         finished = asyncio.get_running_loop().create_future()
         self._pending_finish = finished
@@ -462,15 +518,26 @@ class PbxPageMediaPlayer(MediaPlayerEntity):
             if not self._client.available:
                 self._call_id = None
                 self._call_state = None
+                self._paused = False
             self.async_write_ha_state()
             return
 
         if event.get("call_id") is None or event["call_id"] != self._call_id:
             return
 
+        if event_type == EVENT_PLAYBACK_PAUSED:
+            self._paused = True
+            self.async_write_ha_state()
+            return
+        if event_type == EVENT_PLAYBACK_RESUMED:
+            self._paused = False
+            self.async_write_ha_state()
+            return
+
         if event_type == EVENT_DISCONNECTED:
             self._call_state = None
             self._call_id = None
+            self._paused = False
             if (reason := event.get("reason")) not in (None, "disconnected", "playback_complete"):
                 self._last_error = f"{reason} ({event.get('sip_code')} {event.get('sip_reason')})"
             finish = self._pending_finish

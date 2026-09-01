@@ -4,9 +4,9 @@ Three suites, deliberately separated by what they need to run.
 
 | Suite | Where | Needs | Count |
 | --- | --- | --- | --- |
-| Integration | `tests/` | a Python venv | 47 |
-| Sidecar unit | `sidecar/tests/` | the sidecar image (ffmpeg) | 52 |
-| End-to-end | `sidecar/tests/integration/` | Docker, a real Asterisk | 15 |
+| Integration | `tests/` | a Python venv | 61 |
+| Sidecar unit | `sidecar/tests/` | the sidecar image (ffmpeg) | 58 |
+| End-to-end | `sidecar/tests/integration/` | Docker, a real Asterisk | 18 |
 
 Nothing anywhere depends on FreePBX, or on your PBX being reachable.
 

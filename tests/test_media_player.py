@@ -56,9 +56,10 @@ async def test_advertises_only_supportable_features(
     """Advertising a feature the backend cannot honour breaks automations that
     trust it, so the set is exact rather than generous.
 
-    BROWSE_MEDIA is in the set because it is genuinely honoured - the sidecar's
-    sounds plus media_source. PAUSE and SEEK are not, because on a clip of a few
-    seconds they could only be pretended.
+    BROWSE_MEDIA, PAUSE and PLAY are in the set because they are genuinely
+    honoured. SEEK, volume and track navigation are not: the sidecar has no
+    position control, no mixer, and no notion of a playlist, so advertising them
+    would be a promise it could not keep.
     """
     features = hass.states.get(ENTITY).attributes[ATTR_SUPPORTED_FEATURES]
     expected = (
@@ -68,14 +69,17 @@ async def test_advertises_only_supportable_features(
         | MediaPlayerEntityFeature.TURN_OFF
         | MediaPlayerEntityFeature.SELECT_SOURCE
         | MediaPlayerEntityFeature.BROWSE_MEDIA
+        | MediaPlayerEntityFeature.PAUSE
+        | MediaPlayerEntityFeature.PLAY
     )
     assert features == expected
     for unsupported in (
-        MediaPlayerEntityFeature.PAUSE,
         MediaPlayerEntityFeature.SEEK,
         MediaPlayerEntityFeature.VOLUME_SET,
+        MediaPlayerEntityFeature.VOLUME_MUTE,
         MediaPlayerEntityFeature.NEXT_TRACK,
         MediaPlayerEntityFeature.SHUFFLE_SET,
+        MediaPlayerEntityFeature.REPEAT_SET,
     ):
         assert not features & unsupported
 

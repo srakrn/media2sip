@@ -22,10 +22,13 @@ class CallRequest(BaseModel):
                     "Auto-answering handsets need this or the first word is clipped.",
     )
     account_id: str | None = None
-    policy: Literal["reject", "preempt"] = Field(
+    policy: Literal["reject", "preempt", "replace"] = Field(
         "reject",
         description="What to do when this target already has a call in flight. "
-                    "Queueing is the integration's job, not the sidecar's.",
+                    "`replace` swaps the audio on the call that is already up, "
+                    "which starts instantly and does not make the handsets answer "
+                    "again; `preempt` hangs up and re-dials. Queueing is the "
+                    "integration's job, not the sidecar's.",
     )
     headers: dict[str, str] | None = Field(
         None, description="Extra headers for fetching the media URL, e.g. Authorization"
@@ -42,6 +45,13 @@ class CallResponse(BaseModel):
     media: str
     cached: bool
     preempted: list[str] = []
+    # True when the audio was swapped into a call that was already up, rather
+    # than a new call being placed.
+    replaced: bool = False
+
+
+class PauseRequest(BaseModel):
+    paused: bool
 
 
 class AccountHealth(BaseModel):
