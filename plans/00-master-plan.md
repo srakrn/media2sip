@@ -1,16 +1,16 @@
 # Plan: expose SIP paging extensions as Home Assistant media players
 
 > **Status, 2026-08-31.** Phase 0 skipped as a discrete step; the parts of it that mattered were
-> answered in passing by phase 1 and are recorded in [`docs/environment.md`](../docs/environment.md).
-> **Phase 1 is done and accepted** — see [`docs/phase1-poc.md`](../docs/phase1-poc.md). Paging target
+> answered in passing by phase 1 and are recorded in [`docs/dev/environment.md`](../docs/dev/environment.md).
+> **Phase 1 is done and accepted** — see [`docs/dev/phase1-poc.md`](../docs/dev/phase1-poc.md). Paging target
 > is **991** (not 211), the UA is extension **9901**, and the negotiated codec is **PCMU 8 kHz mono**.
 > **Phase 2 (the sidecar) is built and working** — it pages 991 with live Home Assistant TTS from a
-> Docker container; see [`sidecar/`](../sidecar/) and [`docs/deployment.md`](../docs/deployment.md).
+> Docker container; see [`sidecar/`](../sidecar/) and [`docs/user/networking.md`](../docs/user/networking.md).
 > Home Assistant here is a **Container** install, so plain Docker is the target and the add-on
 > manifest is portability. **Phases 3, 4 and 5 are built** — see
-> [`docs/integration.md`](../docs/integration.md). The definition of done is met: `tts.speak`
+> [`docs/user/usage.md`](../docs/user/usage.md). The definition of done is met: `tts.speak`
 > against `media_player.working_zone` pages the handsets. **Phase 6 is complete** — 137 tests across
-> three suites ([`docs/testing.md`](../docs/testing.md)), per-call diagnostics, and packaging for
+> three suites ([`docs/dev/testing.md`](../docs/dev/testing.md)), per-call diagnostics, and packaging for
 > both HACS and the add-on store. **All phases are done.**
 
 ## Confirmed scope
@@ -81,7 +81,7 @@ sidecar changes.
 
 Running the phase 1 PoC turned out to answer most of this for free, and answer it better: measured
 from a real call rather than read off a config screen. Findings are in
-[`docs/environment.md`](../docs/environment.md). Settled:
+[`docs/dev/environment.md`](../docs/dev/environment.md). Settled:
 
 - Paging target is **991**, not the 211 carried over from Issabel. It answers `200 OK` immediately
   with no `180 Ringing`, so the page group auto-answers.
@@ -110,7 +110,7 @@ creating extension 9901 in the GUI, exactly as the architecture promised.
 Re-runnable rig in [`phase1/`](../phase1/): `./phase1/page.sh 991 chime_announce`.
 
 Acceptance met. Full write-up, including what it changed downstream, in
-[`docs/phase1-poc.md`](../docs/phase1-poc.md). The two findings that touch later phases:
+[`docs/dev/phase1-poc.md`](../docs/dev/phase1-poc.md). The two findings that touch later phases:
 
 - **`baresip`'s `aufile` never signals end-of-playback** — it underruns silently at EOF. Completion
   has to be inferred from `ffprobe` duration. That is already the plan for the timeout, but it makes
@@ -305,7 +305,7 @@ media player semantics.
   On redaction: SIP credentials never leave the sidecar, and the media label is a content hash
   plus a host rather than a URL. A Home Assistant TTS proxy URL carries a token that grants access
   to the audio, and diagnostics files get shared around.
-- **Tests: done.** 137 across three suites ([`docs/testing.md`](../docs/testing.md)):
+- **Tests: done.** 137 across three suites ([`docs/dev/testing.md`](../docs/dev/testing.md)):
   61 integration-side against a mocked sidecar, covering every case named here; 58 sidecar-side
   unit tests; and 18 end-to-end against a real Asterisk 22.10.1 in Docker — the same version the
   production FreePBX runs, and needing nothing FreePBX-specific, exactly as predicted.
@@ -362,7 +362,7 @@ media player semantics.
   Hub and GHCR, verifies the pushed image reports the right version on both architectures, and
   fills in the install notes. A release that fails is **put back to draft** — a published release
   with no image is worse than none, because HACS would offer the integration to everyone paired
-  with a sidecar they cannot pull. See [`docs/releasing.md`](../docs/releasing.md).
+  with a sidecar they cannot pull. See [`docs/dev/releasing.md`](../docs/dev/releasing.md).
 
   One thing the add-on shape forced, worth recording: **built-in sounds moved out of `/data`** to
   `/opt/pbx-page/sounds`. The supervisor mounts `/data` as the add-on's persistent volume, which

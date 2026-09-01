@@ -32,10 +32,11 @@ addon.write_text(
 )
 
 # The docs and the sample compose pin an image tag; keep them with the rest.
-for doc in (
-    pathlib.Path("sidecar/docker-compose.example.yml"),
-    pathlib.Path("docs/installation.md"),
-):
+# Globbed rather than listed, so moving a doc cannot silently stop bumping it —
+# versions.sh greps the same trees and would fail the release instead.
+docs = [pathlib.Path("sidecar/docker-compose.example.yml")]
+docs += sorted(pathlib.Path("docs").rglob("*.md"))
+for doc in docs:
     if doc.is_file():
         doc.write_text(
             re.sub(r"srakrn/media2sip:[0-9][^\s\\]*",

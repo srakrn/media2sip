@@ -63,7 +63,7 @@ worth serving" branch is closed.
 
 Install type settles the phase 0 packaging question: **plain Docker**, with the add-on manifest
 kept as portability for other installs. A broker exists, but the sidecar speaks HTTP plus a
-websocket anyway so it carries no external dependency; see [deployment.md](deployment.md).
+websocket anyway so it carries no external dependency; see [networking.md](../user/networking.md).
 
 ## Network
 

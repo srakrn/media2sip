@@ -1,7 +1,7 @@
 # Phase 1 rig
 
 Manual proof of concept: register as a SIP extension, dial the paging extension, play a WAV.
-See [../docs/phase1-poc.md](../docs/phase1-poc.md) for results.
+See [../docs/dev/phase1-poc.md](../docs/dev/phase1-poc.md) for results.
 
 ## Use
 

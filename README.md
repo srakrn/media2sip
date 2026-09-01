@@ -18,7 +18,8 @@ portability is the point: anything with a SIP registrar works.
 
 ## Getting started
 
-Full walkthrough in **[docs/installation.md](docs/installation.md)**. In short:
+Full walkthrough in **[docs/user/installation.md](docs/user/installation.md)**.
+In short:
 
 1. Create one extension on your PBX and note its number and secret.
 2. Run the sidecar — the **PBX Page Sidecar** add-on on Home Assistant OS or
@@ -33,6 +34,34 @@ Full walkthrough in **[docs/installation.md](docs/installation.md)**. In short:
 The same repository serves HACS and the add-on store, so both halves stay
 versioned together.
 
+## Documentation
+
+The docs are split by who you are. Index at [`docs/`](docs/).
+
+**Running it** — [`docs/user/`](docs/user/)
+
+| | |
+| --- | --- |
+| [installation.md](docs/user/installation.md) | HACS, the add-on, and Docker, step by step |
+| [configuration.md](docs/user/configuration.md) | every setting on both halves |
+| [networking.md](docs/user/networking.md) | host vs bridged, the part that actually matters |
+| [usage.md](docs/user/usage.md) | the entity, the services, concurrency |
+| [troubleshooting.md](docs/user/troubleshooting.md) | when a page does not arrive |
+
+**Working on it** — [`docs/dev/`](docs/dev/)
+
+| | |
+| --- | --- |
+| [architecture.md](docs/dev/architecture.md) | how the two halves are split, and why |
+| [testing.md](docs/dev/testing.md) | the three test suites |
+| [releasing.md](docs/dev/releasing.md) | how the two halves stay in step |
+| [environment.md](docs/dev/environment.md) | the PBX and Home Assistant this was built against |
+| [phase1-poc.md](docs/dev/phase1-poc.md) | the proof of concept that started it |
+
+[`plans/00-master-plan.md`](plans/00-master-plan.md) has the design and the
+reasoning behind it; [`sidecar/README.md`](sidecar/README.md) has the control API
+and the sidecar's internals.
+
 ## Versioning
 
 The integration and the sidecar image share one version and are **released as a
@@ -43,49 +72,29 @@ version. Pin the image tag rather than using `latest`.
 
 Releasing is one button: **Actions → prepare release** to bump and open a draft,
 then **Publish release** in GitHub, which builds and pushes the image and fills in
-the notes. See [docs/releasing.md](docs/releasing.md).
-
-[`docs/deployment.md`](docs/deployment.md) covers networking, which is the part
-that actually matters. [`docs/integration.md`](docs/integration.md) covers the
-entity, services and concurrency.
-
-## Status
-
-| Phase | |
-| --- | --- |
-| 1 — manual proof of concept | done ([write-up](docs/phase1-poc.md)) |
-| 2 — the sidecar | built ([README](sidecar/README.md)) |
-| 3, 4, 5 — integration, entity, concurrency | built ([docs](docs/integration.md)) |
-| 6 — hardening | done: 137 tests, per-call diagnostics, HACS + add-on packaging |
-
-The definition of done is met: `tts.speak` at `media_player.working_zone` pages
-the handsets 1.86 s after the service call, with no clipped first word.
+the notes. See [docs/dev/releasing.md](docs/dev/releasing.md).
 
 ## Tests
 
 ```sh
 ./.venv/bin/python -m pytest tests/          # integration, against a mocked sidecar
-docker run --rm media2sip:test        # sidecar unit
+docker run --rm media2sip:test               # sidecar unit
 ./sidecar/tests/integration/run.sh           # end-to-end against a real Asterisk
 ```
 
-See [`docs/testing.md`](docs/testing.md).
+See [`docs/dev/testing.md`](docs/dev/testing.md).
 
-## Documentation
+## Status
 
-| | |
+| Phase | |
 | --- | --- |
-| [installation.md](docs/installation.md) | HACS, the add-on, and Docker, step by step |
-| [deployment.md](docs/deployment.md) | networking, which is the part that actually matters |
-| [integration.md](docs/integration.md) | the entity, services, concurrency, diagnostics |
-| [releasing.md](docs/releasing.md) | how the two halves stay in step |
-| [testing.md](docs/testing.md) | the three test suites |
-| [environment.md](docs/environment.md) | what this particular installation looks like |
-| [phase1-poc.md](docs/phase1-poc.md) | the proof of concept that started it |
+| 1 — manual proof of concept | done ([write-up](docs/dev/phase1-poc.md)) |
+| 2 — the sidecar | built ([README](sidecar/README.md)) |
+| 3, 4, 5 — integration, entity, concurrency | built ([docs](docs/user/usage.md)) |
+| 6 — hardening | done: 137 tests, per-call diagnostics, HACS + add-on packaging |
 
-See [`plans/00-master-plan.md`](plans/00-master-plan.md) for the design and the
-reasoning behind it, and [`docs/environment.md`](docs/environment.md) for what this
-particular installation looks like.
+The definition of done is met: `tts.speak` at `media_player.working_zone` pages
+the handsets 1.86 s after the service call, with no clipped first word.
 
 ## License
 

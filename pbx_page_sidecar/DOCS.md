@@ -54,3 +54,13 @@ Host networking is required and enabled. SIP and RTP both advertise an address,
 and a page group sends media to whatever the SDP says, so the container's address
 has to be the host's. If you must run it bridged, set `sip_public_address` to an
 address the PBX can reach.
+
+## Full documentation
+
+Rendered on GitHub, since the supervisor only shows this page:
+
+- [Installation](https://github.com/srakrn/media2sip/blob/main/docs/user/installation.md) — both halves, step by step
+- [Configuration](https://github.com/srakrn/media2sip/blob/main/docs/user/configuration.md) — every option, including the ones
+  not exposed as add-on options
+- [Usage](https://github.com/srakrn/media2sip/blob/main/docs/user/usage.md) — the entity, the services, concurrency
+- [Troubleshooting](https://github.com/srakrn/media2sip/blob/main/docs/user/troubleshooting.md) — when a page does not arrive

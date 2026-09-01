@@ -14,7 +14,7 @@ extension, with no changes made on the PBX beyond creating that extension.*
    which is the exact mechanism the sidecar will use.
 4. Hung up on a timer derived from `ffprobe` clip duration.
 
-Rig lives in [phase1/](../phase1/) and is re-runnable: `./phase1/page.sh 991 chime_announce`.
+Rig lives in [phase1/](../../phase1/) and is re-runnable: `./phase1/page.sh 991 chime_announce`.
 
 ## What the runs proved
 

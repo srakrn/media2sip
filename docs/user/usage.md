@@ -1,17 +1,8 @@
-# The `pbx_page` integration
+# Using it
 
-One `media_player` entity per paging target. No SIP, no RTP, no compiled
-dependencies — the integration is a state machine driven by sidecar events, which
-is what makes it maintainable.
-
-## Install
-
-Install through HACS as a custom repository, or copy
-`custom_components/pbx_page/` into your Home Assistant `config/` directory. Either
-way, restart, then **Settings → Devices & Services → Add Integration → PBX Page**.
-Full walkthrough in [installation.md](installation.md). The flow asks for the sidecar's URL and validates it
-against `/health`, so a typo shows up there rather than as an entity that is
-permanently unavailable. Then add paging targets one at a time.
+One `media_player` entity per paging target. Install first — see
+[installation.md](installation.md) — and set the options described in
+[configuration.md](configuration.md).
 
 ## The entity
 
@@ -39,6 +30,8 @@ off at sixty seconds by default, which is the guard rail rather than a promise
 that it will sound sensible. Raise it if you genuinely want long playback — and
 note it is also what bounds a paused call.
 
+### States
+
 | Situation | State |
 | --- | --- |
 | Turned off | `off` |
@@ -52,10 +45,10 @@ note it is also what bounds a paused call.
 silently stops working is worse than one that visibly breaks, and this gives you
 something to alert on.
 
-## Using it
+## Calling it
 
 ```yaml
-# Speech. `announce: true` is treated as ordinary playback - there is nothing to
+# Speech. `announce: true` is treated as ordinary playback — there is nothing to
 # duck or resume on a page, and raising on it would break tts.speak, which sets
 # it by default.
 action: tts.speak
@@ -88,7 +81,8 @@ data:
 
 ## Concurrency
 
-Set per entry in the options flow. Per entity:
+What happens when a page arrives while one is already playing. Set per entry in
+the options flow.
 
 - **`replace`** (default) — playing something new swaps the audio on the call
   that is already up. It starts on the next frame, with **no re-dial and no
@@ -107,34 +101,16 @@ Set per entry in the options flow. Per entity:
 
 **Serialise across all targets** is an explicit option, not an inferred one —
 enable it when targets share physical handsets. Inferring which targets overlap is
-guesswork the user can simply tell us.
-
-Queueing lives here rather than in the sidecar because it needs entity-level
-semantics; the sidecar knows `replace`, `preempt` and `reject`.
+guesswork you can simply tell us instead.
 
 > **Changed in 0.3.0.** The default was `queue`. It is now `replace`, so playing
 > something new interrupts what is playing instead of waiting behind it. Set the
 > policy back to `queue` in the options flow if the old behaviour suited you.
 
-## Options
+Queueing lives in the integration rather than the sidecar because it needs
+entity-level semantics; the sidecar itself knows only `replace`, `preempt` and
+`reject`.
 
-| Option | Default | Notes |
-| --- | --- | --- |
-| Lead-in | 1.0 s | Wait between the handsets answering and playback. Too short and the first word is clipped. |
-| Default chime | none | Played before every announcement. |
-| Concurrency policy | `queue` | Above. |
-| Serialise across all targets | off | For targets sharing handsets. |
+---
 
-## Diagnostics
-
-Download from the device page. It carries registration state per account,
-connection state, every entity's state, and the **last twenty calls** — target,
-SIP reason code, latency split into the PBX's part and ours, and `audio_sent`.
-
-That last field is the one to look at first. A call that connects and sends no
-RTP is indistinguishable from a working page by its SIP dialog alone, so the
-packet counters are the only honest signal that a page was actually heard.
-
-Tokens are redacted, and the sidecar labels media by content hash and host rather
-than by URL, so a Home Assistant TTS proxy URL — which carries a token granting
-access to the audio — never reaches a diagnostics file that gets shared around.
+When a page does not arrive, [troubleshooting.md](troubleshooting.md).

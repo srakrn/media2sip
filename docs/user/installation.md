@@ -31,7 +31,7 @@ so the add-on and the integration stay in step by construction.
 ### Anything else — Docker
 
 Home Assistant Container, or a separate machine. Grab
-[`sidecar/docker-compose.example.yml`](../sidecar/docker-compose.example.yml) —
+[`sidecar/docker-compose.example.yml`](../../sidecar/docker-compose.example.yml) —
 it pulls the published image and needs no checkout:
 
 ```sh
@@ -74,7 +74,7 @@ it here — an unregistered sidecar gives you an entity that is permanently
 unavailable and no clue why.
 
 Networking gotchas, and the bridged fallback, are in
-[deployment.md](deployment.md).
+[networking.md](networking.md).
 
 ---
 
@@ -134,7 +134,7 @@ data:
 ```
 
 If nothing is heard, `GET /calls/history` on the sidecar tells you why — see
-[integration.md](integration.md#diagnostics).
+[troubleshooting.md](troubleshooting.md).
 
 ---
 
@@ -148,3 +148,12 @@ Move both halves together:
 
 Order does not matter much, and a brief mismatch is survivable — but the
 integration will say so in the log until both agree.
+
+---
+
+## Next
+
+- Every setting on both halves: [configuration.md](configuration.md).
+- What the entity can do, and what happens when two pages collide:
+  [usage.md](usage.md).
+- When a page does not arrive: [troubleshooting.md](troubleshooting.md).

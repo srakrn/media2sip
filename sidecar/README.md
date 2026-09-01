@@ -2,7 +2,14 @@
 
 A SIP user agent that pages PBX extensions on behalf of Home Assistant, plus a
 local control API. This is the only component with a SIP stack; the Home
-Assistant integration (phase 3) has no non-standard dependencies.
+Assistant integration has no non-standard dependencies.
+
+> **This is a developer reference** — the control API, the media pipeline and the
+> threading rules. If you just want to run it, start at
+> [`docs/user/installation.md`](../docs/user/installation.md); every setting is in
+> [`docs/user/configuration.md`](../docs/user/configuration.md), and the split
+> between the two halves is in
+> [`docs/dev/architecture.md`](../docs/dev/architecture.md).
 
 Runs as a **plain Docker container** or as a **Home Assistant add-on** from the
 same image — `app/config.py` reads the supervisor's `/data/options.json` when
