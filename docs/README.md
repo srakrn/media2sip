@@ -23,10 +23,6 @@ For changing the code, running the suites, or cutting a release.
 | [architecture.md](dev/architecture.md) | how the two halves are split, and why |
 | [testing.md](dev/testing.md) | the three test suites and their traps |
 | [releasing.md](dev/releasing.md) | how the integration and the image stay in step |
-| [environment.md](dev/environment.md) | the PBX and Home Assistant this was built against |
-| [phase1-poc.md](dev/phase1-poc.md) | the proof of concept that started it |
 
-The design and the reasoning behind it are in
-[`plans/00-master-plan.md`](../plans/00-master-plan.md). The sidecar's own
-internals — control API, media pipeline, threading — are in
+The sidecar's own internals — control API, media pipeline, threading — are in
 [`sidecar/README.md`](../sidecar/README.md).

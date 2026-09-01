@@ -1,7 +1,7 @@
 """Media resolution: turn a request into a WAV pjsua2 can play, and cache it.
 
-Everything the PBX will accept here is narrowband (phase 1 measured PCMU 8 kHz
-mono), so every clip is normalised to 16-bit PCM mono at the configured rate.
+Everything the PBX will accept here is narrowband (PCMU 8 kHz mono), so every
+clip is normalised to 16-bit PCM mono at the configured rate.
 pjsua2's AudioMediaPlayer wants a real WAV on disk, which is also what makes the
 cache worth having: Home Assistant already caches TTS by message hash, so a
 repeated phrase skips both the fetch and the transcode.

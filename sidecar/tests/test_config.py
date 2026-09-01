@@ -41,7 +41,7 @@ def test_docker_shape_reads_the_environment(monkeypatch, tmp_path) -> None:
 
 
 def test_legacy_env_names_still_work(monkeypatch, tmp_path) -> None:
-    """SIP_EXTENSION/SIP_SECRET/PBX_HOST come straight from the phase 1 .env."""
+    """SIP_EXTENSION/SIP_SECRET/PBX_HOST are the original env var names."""
     cfg = _load(monkeypatch, {
         "SIP_EXTENSION": "9901", "SIP_SECRET": "secret", "PBX_HOST": "10.1.2.99",
         "PBX_PORT": "5060",

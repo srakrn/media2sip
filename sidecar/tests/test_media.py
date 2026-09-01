@@ -34,7 +34,7 @@ async def test_ffmpeg_is_present() -> None:
 async def test_sound_is_transcoded_to_narrowband(
     resolver: MediaResolver, sounds_dir: Path, make_wav
 ) -> None:
-    """Phase 1 measured PCMU 8 kHz mono; everything is normalised to match."""
+    """The PBX negotiates PCMU 8 kHz mono; everything is normalised to match."""
     make_wav(sounds_dir / "chime.wav", seconds=1.0, rate=44100)
 
     clip = await resolver.resolve("sound:chime")

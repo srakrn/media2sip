@@ -1,6 +1,4 @@
 .env
-phase1/baresip/accounts
-phase1/logs/
 __pycache__/
 *.pyc
 .venv/

@@ -78,13 +78,13 @@ belongs in the integration.
 1. Resolve the media. `sound:` clips come off the volume; URLs are fetched and
    cached **by content hash**, not by URL, because Home Assistant's TTS URLs carry
    a per-request token and a URL-keyed cache would never hit.
-2. Transcode to 16-bit PCM mono 8 kHz with ffmpeg. Phase 1 measured PCMU 8 kHz
-   against the page group and no G.722 on offer, so the codec list is *pinned*
+2. Transcode to 16-bit PCM mono 8 kHz with ffmpeg. The page group negotiates
+   PCMU 8 kHz and offers no G.722, so the codec list is *pinned*
    rather than left to pjsua2's defaults — offering codecs the PBX will never pick
    only widens the surface for a one-way-audio bug.
 3. Place the call, wait for `CONFIRMED`, then **wait the lead-in** before playing.
    Auto-answering handsets need about a second to open the audio path; without it
-   the first word is clipped. Phase 1 confirmed this is not optional.
+   the first word is clipped. This is not optional.
 4. Hang up when `AudioMediaPlayer.onEof2` fires, with a duration-derived timer as
    the backstop, then file a history record with the RTP packet counters — a page
    that sends no RTP looks identical to a working one from the SIP dialog alone.

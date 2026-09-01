@@ -144,9 +144,8 @@ class CallSession:
 class _Player(pj.AudioMediaPlayer):
     """AudioMediaPlayer that reports end-of-file.
 
-    Phase 1 found baresip's file source gives no completion signal, leaving the
-    caller to stopwatch its way through playback. pjsua2 does emit `onEof2`, so
-    the duration timer becomes a backstop rather than the mechanism.
+    pjsua2 emits `onEof2`, so the duration timer is a backstop rather than the
+    mechanism. Inferring completion from a stopwatch alone is what this avoids.
     """
 
     def __init__(self, on_eof: Callable[[], None]) -> None:
@@ -332,8 +331,8 @@ class SipWorker:
     def _pin_codecs(self) -> None:
         """Offer exactly what the page group negotiates, in our order.
 
-        Phase 1 measured PCMU 8 kHz against the FreePBX page group. Leaving the
-        default priority list in place means offering codecs the PBX will never
+        The FreePBX page group negotiates PCMU 8 kHz. Leaving the default
+        priority list in place means offering codecs the PBX will never
         pick, which only widens the surface for a one-way-audio bug.
         """
         wanted = {c.upper(): len(self.config.codecs) - i for i, c in enumerate(self.config.codecs)}
@@ -592,7 +591,7 @@ class SipWorker:
                 session.answer_deadline = 0.0
                 # The lead-in starts here, not at playback: auto-answering
                 # handsets need a moment to open the audio path or the first
-                # word is lost. Phase 1 confirmed this is not optional.
+                # word is lost. This is not optional.
                 session.playback_deadline = session.confirmed_at + session.lead_in
                 self._publish(ev.CONFIRMED, session)
         elif info.state == pj.PJSIP_INV_STATE_DISCONNECTED:

@@ -55,12 +55,9 @@ The docs are split by who you are. Index at [`docs/`](docs/).
 | [architecture.md](docs/dev/architecture.md) | how the two halves are split, and why |
 | [testing.md](docs/dev/testing.md) | the three test suites |
 | [releasing.md](docs/dev/releasing.md) | how the two halves stay in step |
-| [environment.md](docs/dev/environment.md) | the PBX and Home Assistant this was built against |
-| [phase1-poc.md](docs/dev/phase1-poc.md) | the proof of concept that started it |
 
-[`plans/00-master-plan.md`](plans/00-master-plan.md) has the design and the
-reasoning behind it; [`sidecar/README.md`](sidecar/README.md) has the control API
-and the sidecar's internals.
+[`sidecar/README.md`](sidecar/README.md) has the control API and the sidecar's
+internals.
 
 ## Versioning
 
@@ -86,15 +83,9 @@ See [`docs/dev/testing.md`](docs/dev/testing.md).
 
 ## Status
 
-| Phase | |
-| --- | --- |
-| 1 — manual proof of concept | done ([write-up](docs/dev/phase1-poc.md)) |
-| 2 — the sidecar | built ([README](sidecar/README.md)) |
-| 3, 4, 5 — integration, entity, concurrency | built ([docs](docs/user/usage.md)) |
-| 6 — hardening | done: 137 tests, per-call diagnostics, HACS + add-on packaging |
-
-The definition of done is met: `tts.speak` at `media_player.working_zone` pages
-the handsets 1.86 s after the service call, with no clipped first word.
+In use. `tts.speak` at a paging target reaches the handsets 1.86 s after the
+service call, with no clipped first word. 137 tests across three suites, per-call
+diagnostics, and packaging for both HACS and the add-on store.
 
 ## License
 

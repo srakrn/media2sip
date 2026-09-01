@@ -9,9 +9,6 @@ drops. That portability is the point: anything with a SIP registrar works, and
 the design must not depend on FreePBX even though that is what it was built
 against.
 
-The reasoning in full is in
-[`plans/00-master-plan.md`](../../plans/00-master-plan.md).
-
 ## Two halves
 
 | | |
@@ -60,14 +57,18 @@ versioned together.
 
 ## Constraints worth knowing before you change something
 
-- **Narrowband, pinned.** The measured negotiation is PCMU 8 kHz mono, ptime 20,
-  with no G.722 on offer ([environment.md](environment.md)). The codec list is
-  pinned rather than left to pjsua2's defaults; offering codecs the PBX will
-  never pick only widens the surface for a one-way-audio bug.
-- **The lead-in is not optional.** Phase 1 established that handsets need about a
-  second after answering before audio is heard, and that padding it into the clip
-  is the wrong place — every dynamic TTS clip would need re-encoding
-  ([phase1-poc.md](phase1-poc.md)).
+- **Narrowband, pinned.** The measured negotiation against the page group is
+  PCMU 8 kHz mono, ptime 20, with no G.722 on offer, so every clip is transcoded
+  to 8 kHz mono 16-bit PCM and the codec list is pinned rather than left to
+  pjsua2's defaults. Offering codecs the PBX will never pick only widens the
+  surface for a one-way-audio bug.
+- **The lead-in is not optional.** Auto-answering handsets need about a second
+  after answering before audio is heard. Padding that silence into the clip
+  instead works, but is the wrong place for it — every dynamic TTS clip would
+  need re-encoding just to prepend it.
+- **A page group may never send `180 Ringing`.** It answers immediately on behalf
+  of its members, so the normal call goes `calling -> confirmed` with no `early`
+  phase. Do not make `early` a required step.
 - **RTP counters are the only honest success signal.** A call that connects and
   sends nothing is invisible from the SIP dialog alone, which is why `audio_sent`
   exists and why the end-to-end suite records what the far end actually hears
@@ -83,8 +84,20 @@ sidecar/                      the SIP user agent and control API
 pbx_page_sidecar/             add-on manifest and user-facing add-on docs
 tests/                        integration suite (mocked sidecar)
 scripts/                      bump-version.sh, versions.sh
-phase1/                       the baresip proof-of-concept rig, kept re-runnable
-plans/                        the master plan
 docs/user/                    documentation for people running it
 docs/dev/                     this
 ```
+
+## Verified against
+
+| | |
+| --- | --- |
+| PBX | FreePBX 17.0.19.32, Asterisk 22.10.1, `chan_pjsip` |
+| Media | PCMU 8 kHz mono, ptime 20; G.722 not offered |
+| Home Assistant | 2026.7.2, Container install |
+| End-to-end suite | Asterisk 22.10.1 in Docker, so the same stack CI exercises |
+
+Nothing in the design depends on FreePBX, but that is what the specifics above —
+the narrowband pin, `rport`/`received` and `rtp_symmetric` in
+[networking.md](../user/networking.md), the responsive-firewall warning — were
+measured against.

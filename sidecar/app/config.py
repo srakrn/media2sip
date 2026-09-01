@@ -100,13 +100,13 @@ class Config:
     rtp_port_start: int = 20000
     rtp_port_count: int = 100
 
-    # Phase 1 measured PCMU 8 kHz mono against the FreePBX page group, and no
-    # G.722 on offer. Narrowband is the whole story here, so the offer is pinned
+    # The FreePBX page group negotiates PCMU 8 kHz mono and offers no G.722.
+    # Narrowband is the whole story here, so the offer is pinned
     # rather than left to pjsua2's default priority order.
     codecs: list[str] = field(default_factory=lambda: ["PCMU/8000/1", "PCMA/8000/1"])
 
     # Auto-answering handsets need a moment to open the audio path. Without this
-    # the first word is clipped. Phase 1 confirmed it is not optional.
+    # the first word is clipped. It is not optional.
     lead_in: float = 1.0
 
     # Guard rails. Paging clips are seconds long; anything past these is a fault.
