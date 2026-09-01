@@ -54,7 +54,12 @@ async def test_advertises_only_supportable_features(
     hass: HomeAssistant, setup_integration
 ) -> None:
     """Advertising a feature the backend cannot honour breaks automations that
-    trust it, so the set is exact rather than generous."""
+    trust it, so the set is exact rather than generous.
+
+    BROWSE_MEDIA is in the set because it is genuinely honoured - the sidecar's
+    sounds plus media_source. PAUSE and SEEK are not, because on a clip of a few
+    seconds they could only be pretended.
+    """
     features = hass.states.get(ENTITY).attributes[ATTR_SUPPORTED_FEATURES]
     expected = (
         MediaPlayerEntityFeature.PLAY_MEDIA
@@ -62,14 +67,15 @@ async def test_advertises_only_supportable_features(
         | MediaPlayerEntityFeature.TURN_ON
         | MediaPlayerEntityFeature.TURN_OFF
         | MediaPlayerEntityFeature.SELECT_SOURCE
+        | MediaPlayerEntityFeature.BROWSE_MEDIA
     )
     assert features == expected
     for unsupported in (
         MediaPlayerEntityFeature.PAUSE,
         MediaPlayerEntityFeature.SEEK,
         MediaPlayerEntityFeature.VOLUME_SET,
-        MediaPlayerEntityFeature.BROWSE_MEDIA,
         MediaPlayerEntityFeature.NEXT_TRACK,
+        MediaPlayerEntityFeature.SHUFFLE_SET,
     ):
         assert not features & unsupported
 

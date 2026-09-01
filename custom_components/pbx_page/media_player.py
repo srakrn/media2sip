@@ -15,12 +15,15 @@ from typing import Any
 
 from homeassistant.components import media_source
 from homeassistant.components.media_player import (
+    BrowseMedia,
+    MediaClass,
     MediaPlayerEntity,
     MediaPlayerEntityFeature,
     MediaPlayerState,
     MediaType,
     async_process_play_media_url,
 )
+from homeassistant.components.media_player.errors import BrowseError
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -51,6 +54,13 @@ from .const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+# The virtual folder holding the sidecar's static clips.
+SOUNDS_ROOT = "pbx_page://sounds"
+
+
+def _is_audio(item: media_source.BrowseMediaSource) -> bool:
+    return item.media_content_type.startswith("audio/")
 
 
 async def async_setup_entry(
@@ -140,6 +150,14 @@ class PbxPageMediaPlayer(MediaPlayerEntity):
             | MediaPlayerEntityFeature.STOP
             | MediaPlayerEntityFeature.TURN_ON
             | MediaPlayerEntityFeature.TURN_OFF
+            # Browsing is honoured for real - the sidecar's own sounds plus
+            # anything media_source offers - so it is advertised, unlike PAUSE
+            # and SEEK which the backend could only pretend to support.
+            #
+            # It is also what puts the entity in the Media panel's player picker,
+            # which filters on exactly this feature. Without it the entity is
+            # reachable only from services and automations.
+            | MediaPlayerEntityFeature.BROWSE_MEDIA
         )
         if self._client.sounds:
             features |= MediaPlayerEntityFeature.SELECT_SOURCE
@@ -213,6 +231,73 @@ class PbxPageMediaPlayer(MediaPlayerEntity):
 
     async def async_select_source(self, source: str) -> None:
         await self.async_page(sound=source)
+
+    async def async_browse_media(
+        self,
+        media_content_type: MediaType | str | None = None,
+        media_content_id: str | None = None,
+    ) -> BrowseMedia:
+        """Browse the sidecar's own sounds, then everything media_source offers.
+
+        Audio only. A paging target has no use for a video library, and offering
+        one would be the sort of empty gesture this entity otherwise avoids.
+        """
+        if media_content_id and media_content_id.startswith(SOUND_PREFIX):
+            raise BrowseError(f"{media_content_id} is a sound, not a folder")
+
+        if media_content_id == SOUNDS_ROOT:
+            return self._browse_sounds()
+
+        if media_content_id:
+            return await media_source.async_browse_media(
+                self.hass, media_content_id, content_filter=_is_audio
+            )
+
+        children: list[BrowseMedia] = []
+        if self._client.sounds:
+            children.append(self._browse_sounds())
+        try:
+            library = await media_source.async_browse_media(
+                self.hass, None, content_filter=_is_audio
+            )
+        except BrowseError:
+            library = None
+        if library is not None and library.children:
+            children.extend(library.children)
+
+        return BrowseMedia(
+            title=self._target_name,
+            media_class=MediaClass.DIRECTORY,
+            media_content_type="",
+            media_content_id="",
+            can_play=False,
+            can_expand=True,
+            children=children,
+            children_media_class=MediaClass.DIRECTORY,
+        )
+
+    def _browse_sounds(self) -> BrowseMedia:
+        """The sidecar's static clips: already transcoded, played with no fetch."""
+        return BrowseMedia(
+            title="Sidecar sounds",
+            media_class=MediaClass.DIRECTORY,
+            media_content_type="",
+            media_content_id=SOUNDS_ROOT,
+            can_play=False,
+            can_expand=True,
+            children_media_class=MediaClass.MUSIC,
+            children=[
+                BrowseMedia(
+                    title=name,
+                    media_class=MediaClass.MUSIC,
+                    media_content_type=MediaType.MUSIC,
+                    media_content_id=f"{SOUND_PREFIX}{name}",
+                    can_play=True,
+                    can_expand=False,
+                )
+                for name in self._client.sounds
+            ],
+        )
 
     async def async_play_media(
         self, media_type: MediaType | str, media_id: str, **kwargs: Any

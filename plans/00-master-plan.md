@@ -210,10 +210,21 @@ One entity per paging target. Advertise exactly:
 - `STOP` (hang up)
 - `TURN_ON` / `TURN_OFF` (soft enable and disable)
 - `SELECT_SOURCE` only if static sounds are exposed that way
+- `BROWSE_MEDIA` — **added after the fact**, see below
 
-Do not advertise `PAUSE`, `SEEK`, `VOLUME_SET`, `BROWSE_MEDIA`, or track navigation. For clips of
-a few seconds those are theatre, and advertising features the backend cannot honour breaks
-automations that trust them.
+Do not advertise `PAUSE`, `SEEK`, `VOLUME_SET`, or track navigation. For clips of a few seconds
+those are theatre, and advertising features the backend cannot honour breaks automations that
+trust them.
+
+**`BROWSE_MEDIA` was on that list and has been taken off it.** The rule was right; it was applied
+to the wrong feature. Pause and seek are theatre because the backend cannot honour them. Browsing
+it *can* honour — the sidecar's own sounds, plus whatever `media_source` offers — so refusing it
+was not restraint, just a gap.
+
+The gap had a concrete cost. Home Assistant's Media panel builds its player picker by filtering on
+`MediaPlayerEntityFeature.BROWSE_MEDIA` and nothing else, so the entity simply never appeared
+there, and the only ways to page were a service call or an automation. That is not a trade-off
+anyone chose; it fell out of a rule applied too broadly.
 
 `async_play_media`: resolve via `media_source` and `async_process_play_media_url` unless the id
 matches a static sound, then `POST /call`. Treat `announce: true` as ordinary playback, since

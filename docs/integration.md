@@ -15,11 +15,21 @@ permanently unavailable. Then add paging targets one at a time.
 
 ## The entity
 
-Advertises exactly `PLAY_MEDIA`, `STOP`, `TURN_ON`, `TURN_OFF`, and
-`SELECT_SOURCE` when the sidecar has static sounds — `supported_features = 7040`.
-Not `PAUSE`, `SEEK`, `VOLUME_SET`, `BROWSE_MEDIA`, or track navigation: for clips
-of a few seconds those are theatre, and advertising features the backend cannot
-honour breaks automations that trust them.
+Advertises exactly `PLAY_MEDIA`, `STOP`, `TURN_ON`, `TURN_OFF`, `BROWSE_MEDIA`,
+and `SELECT_SOURCE` when the sidecar has static sounds —
+`supported_features = 138112`. Not `PAUSE`, `SEEK`, `VOLUME_SET`, or track
+navigation: for clips of a few seconds those are theatre, and advertising
+features the backend cannot honour breaks automations that trust them.
+
+`BROWSE_MEDIA` is in the list because it is genuinely honoured, and because the
+**Media panel's player picker filters on that feature alone** — without it the
+entity never appears there and is reachable only from services and automations.
+
+Browsing offers the sidecar's own sounds first (already transcoded, played with
+no fetch), then everything `media_source` has, filtered to audio. Nothing stops
+you picking a half-hour album; `MAX_CALL_SECONDS` on the sidecar cuts the page
+off at sixty seconds by default, which is the guard rail rather than a promise
+that it will sound sensible.
 
 | Situation | State |
 | --- | --- |

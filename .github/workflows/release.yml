@@ -14,8 +14,8 @@ on:
     types: [published]
   workflow_dispatch:
     inputs:
-      tag:
-        description: "Existing release tag to (re)build, e.g. v0.2.0"
+      version:
+        description: "Release to (re)build. `0.2.0` and `v0.2.0` both work."
         required: true
 
 permissions:
@@ -43,9 +43,28 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          tag="${{ github.event.release.tag_name || github.event.inputs.tag }}"
+          # Both workflows take a version in either form. A release event carries
+          # whatever tag it was created with, so that one is taken as given.
+          if [[ -n "${{ github.event.release.tag_name }}" ]]; then
+            tag="${{ github.event.release.tag_name }}"
+          else
+            bare="${{ github.event.inputs.version }}"
+            bare="${bare#v}"
+            for candidate in "v$bare" "$bare"; do
+              if gh release view "$candidate" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+                tag="$candidate"
+                break
+              fi
+            done
+            if [[ -z "${tag:-}" ]]; then
+              echo "no release found for '$bare' (tried v$bare and $bare)" >&2
+              exit 1
+            fi
+          fi
+
           version="${tag#v}"
           prerelease=$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json isPrerelease -q .isPrerelease)
+          echo "tag $tag -> version $version (prerelease: $prerelease)"
           {
             echo "tag=$tag"
             echo "version=$version"
@@ -86,20 +105,39 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # A prerelease gets its version tag but must not move `latest`, or it lands
-      # on everyone who did not pin.
+      # Exact, then the moving tags people actually pin against:
+      #
+      #   0.2.0   never moves - what the add-on pulls, and what to pin in production
+      #   0.2     newest patch of that minor - bug fixes, no behaviour change
+      #   1       newest minor of that major - only once past 1.0, where the
+      #           promise means something; for 0.x a minor bump may well break you
+      #   latest  newest release, full stop
+      #
+      # A prerelease moves none of them, or it lands on everyone who did not pin.
       - id: tags
         run: |
           v="${{ needs.check.outputs.version }}"
           hub="docker.io/${{ env.NAMESPACE }}/${{ env.IMAGE }}"
           ghcr="ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE }}"
-          tags="$hub:$v"$'\n'"$ghcr:$v"
-          if [[ "${{ needs.check.outputs.prerelease }}" != "true" ]]; then
-            tags="$tags"$'\n'"$hub:latest"$'\n'"$ghcr:latest"
+
+          tags=""
+          add() { tags="${tags}${hub}:$1"$'\n'"${ghcr}:$1"$'\n'; }
+
+          add "$v"
+          if [[ "${{ needs.check.outputs.prerelease }}" != "true" \
+                && "$v" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            add "${BASH_REMATCH[1]}.${BASH_REMATCH[2]}"
+            if (( BASH_REMATCH[1] >= 1 )); then
+              add "${BASH_REMATCH[1]}"
+            fi
+            add "latest"
           fi
+
+          echo "will push:"
+          echo "$tags" | sed '/^$/d;s/^/  /'
           {
             echo "list<<EOF"
-            echo "$tags"
+            echo "$tags" | sed '/^$/d'
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 

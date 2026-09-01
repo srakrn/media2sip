@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "New version, e.g. 0.2.0"
+        description: "New version. `0.2.0` and `v0.2.0` both work; the tag is always vX.Y.Z."
         required: true
       prerelease:
         description: "Mark as a prerelease (does not move the `latest` image tag)"

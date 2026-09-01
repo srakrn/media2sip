@@ -57,7 +57,11 @@ docker run -d --name pbx-page-sidecar --restart unless-stopped \
 
 Images are on Docker Hub as `srakrn/media2sip` and on GHCR as
 `ghcr.io/srakrn/media2sip`, `linux/amd64` and `linux/arm64`.
-**Pin the tag** to the integration version rather than using `latest`.
+
+**Pin the tag** to the integration version — `0.2.0`, not `latest`. The two halves
+are only tested together, and `latest` will eventually hand you a mismatched pair.
+A `0.2` tag also exists and follows patch releases of that minor, if you want bug
+fixes without watching for them.
 
 ### Check it before going further
 

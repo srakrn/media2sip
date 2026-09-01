@@ -4,6 +4,9 @@
 # published image, so you do not need a checkout of this repository. Pin the tag
 # to the same version as the integration you installed through HACS - the two are
 # released as a pair, and the integration logs a warning if they disagree.
+#
+# `0.2` also exists and follows patch releases of that minor. `latest` exists too,
+# and will eventually hand you a sidecar your integration was never tested with.
 
 services:
   pbx-page-sidecar:
