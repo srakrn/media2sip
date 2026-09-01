@@ -14,7 +14,7 @@ against.
 | | |
 | --- | --- |
 | [`sidecar/`](../../sidecar/) | pjsua2 SIP user agent plus a local HTTP control API. **The only component with a SIP stack.** Ships as a Docker image and, from the same image, as a Home Assistant add-on. |
-| [`custom_components/pbx_page/`](../../custom_components/pbx_page/) | the Home Assistant integration. No SIP, no RTP, no compiled dependencies — a state machine driven by sidecar events. |
+| [`custom_components/media2sip/`](../../custom_components/media2sip/) | the Home Assistant integration. No SIP, no RTP, no compiled dependencies — a state machine driven by sidecar events. |
 
 The split is what makes the integration maintainable: Home Assistant custom
 components cannot reasonably carry a compiled SIP stack, and the half that can is
@@ -51,7 +51,7 @@ stamped into the image at build time.
 ## One repository, two distribution channels
 
 The add-on store and HACS read different files — `repository.yaml` plus
-`pbx_page_sidecar/` for the supervisor, `hacs.json` plus `custom_components/` for
+`media2sip_sidecar/` for the supervisor, `hacs.json` plus `custom_components/` for
 HACS — and do not collide. Keeping both here is what keeps the two halves
 versioned together.
 
@@ -79,9 +79,9 @@ versioned together.
 ## Repository layout
 
 ```
-custom_components/pbx_page/   the Home Assistant integration
+custom_components/media2sip/   the Home Assistant integration
 sidecar/                      the SIP user agent and control API
-pbx_page_sidecar/             add-on manifest and user-facing add-on docs
+media2sip_sidecar/             add-on manifest and user-facing add-on docs
 tests/                        integration suite (mocked sidecar)
 scripts/                      bump-version.sh, versions.sh
 docs/user/                    documentation for people running it

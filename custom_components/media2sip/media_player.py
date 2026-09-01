@@ -59,7 +59,7 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 # The virtual folder holding the sidecar's static clips.
-SOUNDS_ROOT = "pbx_page://sounds"
+SOUNDS_ROOT = "media2sip://sounds"
 
 
 def _is_audio(item: media_source.BrowseMediaSource) -> bool:
@@ -114,7 +114,7 @@ class PbxPageMediaPlayer(MediaPlayerEntity):
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, self._attr_unique_id)},
             name=self._target_name,
-            manufacturer="PBX Page",
+            manufacturer="Media2SIP",
             model=f"Paging target {self._extension}",
         )
 
@@ -136,7 +136,7 @@ class PbxPageMediaPlayer(MediaPlayerEntity):
         self.async_on_remove(lambda: self._data.entities.pop(self.entity_id, None))
         self.async_on_remove(self._client.add_listener(self._handle_event))
         self._worker = self.hass.async_create_background_task(
-            self._run_queue(), f"pbx_page queue {self._extension}"
+            self._run_queue(), f"media2sip queue {self._extension}"
         )
         self.async_on_remove(self._cancel_worker)
 
@@ -359,14 +359,14 @@ class PbxPageMediaPlayer(MediaPlayerEntity):
     ) -> None:
         """Queue a page and wait for it to be placed.
 
-        Used by `async_play_media`, `async_select_source`, and the `pbx_page.page`
+        Used by `async_play_media`, `async_select_source`, and the `media2sip.page`
         service, so the concurrency policy applies uniformly however a page arrives.
         """
         if not self._enabled:
             raise HomeAssistantError(f"{self.entity_id} is turned off")
         if text is not None:
             raise HomeAssistantError(
-                "pbx_page.page with `text` needs a TTS entity; call tts.speak against "
+                "media2sip.page with `text` needs a TTS entity; call tts.speak against "
                 "this media player instead, or pass `sound`"
             )
         if sound is not None:

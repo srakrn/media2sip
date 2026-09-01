@@ -11,8 +11,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-integration=$(python3 -c 'import json;print(json.load(open("custom_components/pbx_page/manifest.json"))["version"])')
-addon=$(grep '^version:' pbx_page_sidecar/config.yaml | cut -d'"' -f2)
+integration=$(python3 -c 'import json;print(json.load(open("custom_components/media2sip/manifest.json"))["version"])')
+addon=$(grep '^version:' media2sip_sidecar/config.yaml | cut -d'"' -f2)
 printf 'integration  %s\n' "$integration"
 printf 'add-on       %s\n' "$addon"
 

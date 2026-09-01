@@ -61,7 +61,7 @@ data:
 
 ```yaml
 # A static sound, straight from the sidecar's cache with no fetch.
-action: pbx_page.page
+action: media2sip.page
 data:
   targets: [media_player.working_zone]
   sound: chime
@@ -69,7 +69,7 @@ data:
 
 ```yaml
 # Alarm-driven. `urgent` preempts whatever is playing and skips the queue.
-action: pbx_page.page
+action: media2sip.page
 data:
   targets: [media_player.working_zone]
   sound: evacuate

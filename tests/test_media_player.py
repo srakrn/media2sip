@@ -24,7 +24,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 
-from custom_components.pbx_page.client import SidecarBusy, SidecarError
+from custom_components.media2sip.client import SidecarBusy, SidecarError
 
 from .conftest import settle
 

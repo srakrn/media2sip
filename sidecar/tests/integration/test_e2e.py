@@ -23,7 +23,7 @@ import wave
 import pytest
 
 SIDECAR = "http://127.0.0.1:18080"
-INSPECTOR = "pbx-page-e2e-inspector"
+INSPECTOR = "media2sip-e2e-inspector"
 RECORDING = "/recordings/page.wav"
 
 
@@ -55,7 +55,7 @@ def reset_recording() -> None:
 
 def asterisk(command: str) -> str:
     return subprocess.run(
-        ["docker", "exec", "pbx-page-e2e-asterisk", "asterisk", "-rx", command],
+        ["docker", "exec", "media2sip-e2e-asterisk", "asterisk", "-rx", command],
         capture_output=True, text=True,
     ).stdout
 
@@ -118,7 +118,7 @@ def source_clip(name: str) -> dict:
     still sounds shorter than the file is long.
     """
     raw = subprocess.run(
-        ["docker", "exec", INSPECTOR, "cat", f"/opt/pbx-page/sounds/{name}.wav"],
+        ["docker", "exec", INSPECTOR, "cat", f"/opt/media2sip/sounds/{name}.wav"],
         capture_output=True,
     ).stdout
     assert raw, f"the sidecar image has no {name}.wav"
@@ -169,7 +169,7 @@ def test_sidecar_registers_with_asterisk() -> None:
 
 def test_asterisk_sees_the_contact() -> None:
     out = subprocess.run(
-        ["docker", "exec", "pbx-page-e2e-asterisk", "asterisk", "-rx", "pjsip show aors"],
+        ["docker", "exec", "media2sip-e2e-asterisk", "asterisk", "-rx", "pjsip show aors"],
         capture_output=True, text=True,
     ).stdout
     assert "9901" in out
@@ -337,7 +337,7 @@ def long_clip():
     """A clip with room to pause in the middle. Built here rather than shipped,
     so the image is not carrying a test fixture."""
     subprocess.run(
-        ["docker", "exec", "pbx-page-e2e-sidecar", "sh", "-c",
+        ["docker", "exec", "media2sip-e2e-sidecar", "sh", "-c",
          "ffmpeg -y -v error -f lavfi -i 'sine=frequency=660:duration=6' "
          "-ac 1 -ar 8000 -acodec pcm_s16le /data/sounds/long.wav"],
         check=True,
@@ -373,7 +373,7 @@ def test_pause_holds_the_call_and_resumes_where_it_stopped(long_clip) -> None:
     audio = analyse()
     source = measure(
         subprocess.run(
-            ["docker", "exec", "pbx-page-e2e-sidecar", "cat", "/data/sounds/long.wav"],
+            ["docker", "exec", "media2sip-e2e-sidecar", "cat", "/data/sounds/long.wav"],
             capture_output=True,
         ).stdout
     )

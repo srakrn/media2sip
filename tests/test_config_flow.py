@@ -9,8 +9,8 @@ from homeassistant.const import CONF_URL
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
-from custom_components.pbx_page.client import SidecarError
-from custom_components.pbx_page.const import (
+from custom_components.media2sip.client import SidecarError
+from custom_components.media2sip.const import (
     CONF_CHIME,
     CONF_EXTENSION,
     CONF_LEAD_IN,
@@ -42,7 +42,7 @@ async def test_full_flow(hass: HomeAssistant) -> None:
     assert result["step_id"] == "user"
 
     with patch(
-        "custom_components.pbx_page.config_flow.PbxPageClient.async_health",
+        "custom_components.media2sip.config_flow.PbxPageClient.async_health",
         return_value=HEALTH_OK,
     ):
         result = await hass.config_entries.flow.async_configure(
@@ -77,7 +77,7 @@ async def test_unreachable_sidecar_is_caught_in_the_flow(hass: HomeAssistant) ->
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
     with patch(
-        "custom_components.pbx_page.config_flow.PbxPageClient.async_health",
+        "custom_components.media2sip.config_flow.PbxPageClient.async_health",
         side_effect=SidecarError("connection refused"),
     ):
         result = await hass.config_entries.flow.async_configure(
@@ -92,7 +92,7 @@ async def test_sidecar_with_no_accounts_is_rejected(hass: HomeAssistant) -> None
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
     with patch(
-        "custom_components.pbx_page.config_flow.PbxPageClient.async_health",
+        "custom_components.media2sip.config_flow.PbxPageClient.async_health",
         return_value={**HEALTH_OK, "accounts": []},
     ):
         result = await hass.config_entries.flow.async_configure(
@@ -106,7 +106,7 @@ async def test_duplicate_extension_rejected(hass: HomeAssistant) -> None:
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
     with patch(
-        "custom_components.pbx_page.config_flow.PbxPageClient.async_health",
+        "custom_components.media2sip.config_flow.PbxPageClient.async_health",
         return_value=HEALTH_OK,
     ):
         result = await hass.config_entries.flow.async_configure(
@@ -131,7 +131,7 @@ async def test_same_sidecar_cannot_be_added_twice(
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
     with patch(
-        "custom_components.pbx_page.config_flow.PbxPageClient.async_health",
+        "custom_components.media2sip.config_flow.PbxPageClient.async_health",
         return_value=HEALTH_OK,
     ):
         result = await hass.config_entries.flow.async_configure(

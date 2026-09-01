@@ -13,8 +13,8 @@ repository:
 
 | Declared in | Read by | Why it cannot be derived |
 | --- | --- | --- |
-| `custom_components/pbx_page/manifest.json` | HACS | read from the tree at the release tag |
-| `pbx_page_sidecar/config.yaml` | the supervisor | it is what picks `<image>:<version>` |
+| `custom_components/media2sip/manifest.json` | HACS | read from the tree at the release tag |
+| `media2sip_sidecar/config.yaml` | the supervisor | it is what picks `<image>:<version>` |
 | `docker-compose.example.yml`, `installation.md` | whoever copies a pinned tag | it is documentation |
 
 The sidecar's own version is **stamped into the image at build time** — a
@@ -141,7 +141,7 @@ GHCR needs nothing; the workflow's `GITHUB_TOKEN` covers it.
 
 **If your Docker Hub account is not `srakrn`**, set a repository *variable*
 `DOCKERHUB_NAMESPACE` to the right one, and change `image:` in
-`pbx_page_sidecar/config.yaml` to match. Those two must agree or the add-on will
+`media2sip_sidecar/config.yaml` to match. Those two must agree or the add-on will
 pull an image that does not exist.
 
 Nothing appears on Docker Hub until a release is **published**. `prepare release`

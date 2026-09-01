@@ -21,12 +21,12 @@ import json, pathlib, re, sys
 
 version = sys.argv[1]
 
-manifest = pathlib.Path("custom_components/pbx_page/manifest.json")
+manifest = pathlib.Path("custom_components/media2sip/manifest.json")
 data = json.loads(manifest.read_text())
 data["version"] = version
 manifest.write_text(json.dumps(data, indent=2) + "\n")
 
-addon = pathlib.Path("pbx_page_sidecar/config.yaml")
+addon = pathlib.Path("media2sip_sidecar/config.yaml")
 addon.write_text(
     re.sub(r'^version: ".*"$', f'version: "{version}"', addon.read_text(), count=1, flags=re.M)
 )

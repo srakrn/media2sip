@@ -64,7 +64,7 @@ class PbxPageClient:
 
     async def async_start(self) -> None:
         self._closing = False
-        self._task = asyncio.create_task(self._run(), name="pbx_page websocket")
+        self._task = asyncio.create_task(self._run(), name="media2sip websocket")
 
     async def async_stop(self) -> None:
         self._closing = True
@@ -228,4 +228,4 @@ class PbxPageClient:
             try:
                 listener(event)
             except Exception:  # noqa: BLE001
-                _LOGGER.exception("error in a pbx_page event listener")
+                _LOGGER.exception("error in a media2sip event listener")

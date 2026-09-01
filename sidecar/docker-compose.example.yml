@@ -9,9 +9,9 @@
 # and will eventually hand you a sidecar your integration was never tested with.
 
 services:
-  pbx-page-sidecar:
+  media2sip-sidecar:
     image: srakrn/media2sip:0.3.0
-    container_name: pbx-page-sidecar
+    container_name: media2sip-sidecar
     restart: unless-stopped
 
     # SIP and RTP both advertise an address, and a page group sends media to
@@ -53,7 +53,7 @@ services:
       - ./sounds:/data/sounds:ro
       # Transcoded clips, cached by content hash. Worth persisting so a restart
       # does not re-transcode every announcement.
-      - pbx-page-cache:/data/cache
+      - media2sip-cache:/data/cache
 
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/health"]
@@ -62,4 +62,4 @@ services:
       start_period: 20s
 
 volumes:
-  pbx-page-cache:
+  media2sip-cache:

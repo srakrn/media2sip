@@ -1,4 +1,4 @@
-# media2sip
+# Media2SIP
 
 Expose SIP paging extensions as Home Assistant media players. `tts.speak` at a
 `media_player` entity and the handsets auto-answer and speak the message.
@@ -8,7 +8,7 @@ Two components:
 - **[`sidecar/`](sidecar/)** — a SIP user agent (pjsua2) plus a local control API,
   as a Docker container or a Home Assistant add-on. The only component with a SIP
   stack.
-- **[`custom_components/pbx_page/`](custom_components/pbx_page/)** — the Home
+- **[`custom_components/media2sip/`](custom_components/media2sip/)** — the Home
   Assistant integration. No SIP, no compiled dependencies; a state machine driven
   by sidecar events.
 
@@ -22,14 +22,14 @@ Full walkthrough in **[docs/user/installation.md](docs/user/installation.md)**.
 In short:
 
 1. Create one extension on your PBX and note its number and secret.
-2. Run the sidecar — the **PBX Page Sidecar** add-on on Home Assistant OS or
+2. Run the sidecar — the **Media2SIP Sidecar** add-on on Home Assistant OS or
    supervised, otherwise Docker with
    [`sidecar/docker-compose.example.yml`](sidecar/docker-compose.example.yml),
    which pulls the published image and needs no checkout. Check
    `curl -s localhost:8080/health` says `registered: true`.
 3. Install the integration through **HACS** as a custom repository
    (`https://github.com/srakrn/media2sip`, type *Integration*), restart, then
-   add **PBX Page** and point it at the sidecar.
+   add **Media2SIP** and point it at the sidecar.
 
 The same repository serves HACS and the add-on store, so both halves stay
 versioned together.

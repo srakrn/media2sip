@@ -10,7 +10,7 @@ page:
       required: true
       selector:
         entity:
-          integration: pbx_page
+          integration: media2sip
           domain: media_player
           multiple: true
     sound:

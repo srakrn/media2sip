@@ -22,7 +22,7 @@ Pick whichever matches your Home Assistant install.
 
 1. **Settings → Add-ons → Add-on Store → ⋮ → Repositories**.
 2. Add `https://github.com/srakrn/media2sip`.
-3. Install **PBX Page Sidecar**, fill in the extension, secret and PBX host, and
+3. Install **Media2SIP Sidecar**, fill in the extension, secret and PBX host, and
    start it.
 
 It pulls a prebuilt image; the supervisor picks the tag from the add-on version,
@@ -35,7 +35,7 @@ Home Assistant Container, or a separate machine. Grab
 it pulls the published image and needs no checkout:
 
 ```sh
-mkdir pbx-page && cd pbx-page
+mkdir media2sip && cd media2sip
 curl -O https://raw.githubusercontent.com/srakrn/media2sip/main/sidecar/docker-compose.example.yml
 mv docker-compose.example.yml docker-compose.yml
 printf 'SIP_PASSWORD=your-extension-secret\n' > .env
@@ -47,11 +47,11 @@ docker compose up -d
 Or without compose:
 
 ```sh
-docker run -d --name pbx-page-sidecar --restart unless-stopped \
+docker run -d --name media2sip-sidecar --restart unless-stopped \
   --network host \
   -e SIP_USERNAME=9901 -e SIP_PASSWORD=secret -e SIP_HOST=10.1.2.99 \
   -e SIP_LOCAL_PORT=5062 -e LEAD_IN=1.0 \
-  -v pbx-page-cache:/data/cache \
+  -v media2sip-cache:/data/cache \
   srakrn/media2sip:0.3.0
 ```
 
@@ -88,7 +88,7 @@ HACS does not carry this by default, so add it as a custom repository once:
 2. **⋮ (top right) → Custom repositories**.
 3. Repository: `https://github.com/srakrn/media2sip`. Type: **Integration**.
    **Add**.
-4. Search HACS for **PBX Page** and **Download**.
+4. Search HACS for **Media2SIP** and **Download**.
 5. **Restart Home Assistant.** HACS copies files but does not load new
    integrations until a restart.
 
@@ -106,16 +106,16 @@ it, and nothing else is affected.
 ### Manually
 
 Copy the folder into your Home Assistant configuration directory, so you end up
-with `config/custom_components/pbx_page/manifest.json`, then restart:
+with `config/custom_components/media2sip/manifest.json`, then restart:
 
 ```sh
 git clone https://github.com/srakrn/media2sip
-cp -r media2sip/custom_components/pbx_page /path/to/config/custom_components/
+cp -r media2sip/custom_components/media2sip /path/to/config/custom_components/
 ```
 
 ### Configure it
 
-**Settings → Devices & Services → Add Integration → PBX Page**.
+**Settings → Devices & Services → Add Integration → Media2SIP**.
 
 Give the sidecar's address (`http://<sidecar-host>:8080`, and the API token if
 you set one). It is validated against `/health` before anything is created, so a
@@ -148,6 +148,27 @@ Move both halves together:
 
 Order does not matter much, and a brief mismatch is survivable — but the
 integration will say so in the log until both agree.
+
+### Coming from **PBX Page**
+
+The project was renamed to Media2SIP, and the rename reaches the identifiers, so
+it is not an in-place upgrade:
+
+- **The integration.** The domain changed from `pbx_page` to `media2sip`. Remove
+  the old integration in **Settings → Devices & Services** and add the new one;
+  your targets have to be re-entered. Automations calling `pbx_page.page` must be
+  changed to `media2sip.page`. Entity ids are derived from the target's name, so
+  they survive if you name the targets the same way.
+- **The add-on.** The slug changed, so the supervisor treats it as a new add-on.
+  Copy your options out of the old one, install **Media2SIP Sidecar**, then
+  uninstall the old **PBX Page Sidecar**.
+- **Docker.** Only cosmetic — the image is still `srakrn/media2sip`. The example
+  compose renames the service, the container and the cache volume, which will
+  recreate the container and lose the transcode cache. Harmless; it refills.
+- **Sound files.** The add-on's suggested directory is now
+  `/share/media2sip_sounds`, and built-ins moved to `/opt/media2sip/sounds`
+  inside the image. Point `sounds_dir` at whichever path your files are actually
+  in — the old one keeps working if you leave the files there.
 
 ---
 

@@ -25,7 +25,7 @@ permissions:
 env:
   # Set the DOCKERHUB_NAMESPACE repository variable if your Docker Hub account is
   # not named the same as the GitHub owner. It must match `image:` in
-  # pbx_page_sidecar/config.yaml.
+  # media2sip_sidecar/config.yaml.
   NAMESPACE: ${{ vars.DOCKERHUB_NAMESPACE || github.repository_owner }}
   IMAGE: media2sip
 
@@ -185,7 +185,7 @@ jobs:
 
           **Sidecar** — \`${{ env.NAMESPACE }}/${{ env.IMAGE }}:$V\`
           (also \`ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE }}:$V\`,
-          linux/amd64 and linux/arm64), or update the **PBX Page Sidecar** add-on.
+          linux/amd64 and linux/arm64), or update the **Media2SIP Sidecar** add-on.
 
           Pin the tag rather than using \`latest\`. The integration logs a warning if it
           finds itself talking to a sidecar of a different version, so a half-finished

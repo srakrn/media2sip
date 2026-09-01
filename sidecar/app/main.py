@@ -91,7 +91,7 @@ async def lifespan(app: FastAPI):
         await sidecar.stop()
 
 
-app = FastAPI(title="pbx-page sidecar", version=VERSION, lifespan=lifespan)
+app = FastAPI(title="Media2SIP sidecar", version=VERSION, lifespan=lifespan)
 
 
 async def require_token(request: Request) -> None:

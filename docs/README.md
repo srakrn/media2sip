@@ -4,7 +4,7 @@ Two tracks. Pick the one that matches what you are doing.
 
 ## Using it — [`user/`](user/)
 
-For running media2sip on your own Home Assistant and PBX.
+For running Media2SIP on your own Home Assistant and PBX.
 
 | | |
 | --- | --- |

@@ -1,1 +1,1 @@
-"""Tests for the pbx_page integration."""
+"""Tests for the media2sip integration."""

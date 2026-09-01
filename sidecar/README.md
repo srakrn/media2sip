@@ -1,4 +1,4 @@
-# pbx-page sidecar
+# Media2SIP sidecar
 
 A SIP user agent that pages PBX extensions on behalf of Home Assistant, plus a
 local control API. This is the only component with a SIP stack; the Home
@@ -104,7 +104,7 @@ futures resolved with `call_soon_threadsafe`.
 
 ### Sounds
 
-Sounds ship in the image at `/opt/pbx-page/sounds` and your own go in
+Sounds ship in the image at `/opt/media2sip/sounds` and your own go in
 `/data/sounds`, searched first so you can override one by name. They are separate
 because a Home Assistant add-on gets `/data` mounted as its persistent volume,
 which would otherwise shadow everything the image baked in there.

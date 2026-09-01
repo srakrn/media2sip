@@ -2,7 +2,7 @@ services:
   sidecar:
     build: .
     image: media2sip:latest
-    container_name: pbx-page-sidecar
+    container_name: media2sip-sidecar
     restart: unless-stopped
 
     # Host networking is the right answer on Linux: SIP and RTP both want to
@@ -27,7 +27,7 @@ services:
       SIP_PUBLIC_ADDRESS: "${SIP_PUBLIC_ADDRESS:-}"
 
     volumes:
-      # Your own clips. Built-in sounds ship in the image at /opt/pbx-page/sounds
+      # Your own clips. Built-in sounds ship in the image at /opt/media2sip/sounds
       # and are searched after these, so a name here overrides a built-in.
       - ./sounds:/data/sounds:ro
       - cache:/data/cache

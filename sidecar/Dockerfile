@@ -1,4 +1,4 @@
-# pbx-page sidecar: pjsua2 SIP user agent + control API.
+# Media2SIP sidecar: pjsua2 SIP user agent + control API.
 #
 # Stage 1 builds pjproject with its SWIG Python bindings; stage 2 keeps only the
 # shared libraries and the pjsua2 module, so the runtime image carries no compiler.
@@ -71,7 +71,7 @@ COPY app/ ./app/
 # Built-in sounds live outside /data on purpose: a Home Assistant add-on gets
 # /data mounted as its persistent volume, which would shadow anything baked in
 # there. /data/sounds stays available for the operator's own clips.
-COPY sounds/ /opt/pbx-page/sounds/
+COPY sounds/ /opt/media2sip/sounds/
 
 # Stamped by the release workflow; "dev" for any other build, which is the
 # truth about a build nobody released.
@@ -82,7 +82,7 @@ ENV PYTHONUNBUFFERED=1 \
     SIDECAR_PORT=8080 \
     CACHE_DIR=/data/cache \
     SOUNDS_DIR=/data/sounds \
-    BUILTIN_SOUNDS_DIR=/opt/pbx-page/sounds
+    BUILTIN_SOUNDS_DIR=/opt/media2sip/sounds
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s \
     CMD curl -fsS "http://127.0.0.1:${SIDECAR_PORT}/health" || exit 1

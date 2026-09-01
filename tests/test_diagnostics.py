@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from homeassistant.core import HomeAssistant
 
-from custom_components.pbx_page.diagnostics import async_get_config_entry_diagnostics
+from custom_components.media2sip.diagnostics import async_get_config_entry_diagnostics
 
 
 async def test_diagnostics_redacts_the_token(
@@ -27,7 +27,7 @@ async def test_diagnostics_redacts_the_token(
 async def test_diagnostics_reports_an_unreachable_sidecar(
     hass: HomeAssistant, setup_integration, sidecar
 ) -> None:
-    from custom_components.pbx_page.client import SidecarError
+    from custom_components.media2sip.client import SidecarError
 
     async def boom() -> None:
         raise SidecarError("connection refused")

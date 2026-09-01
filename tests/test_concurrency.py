@@ -16,7 +16,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 
 from .conftest import settle
-from custom_components.pbx_page.const import (
+from custom_components.media2sip.const import (
     CONF_GLOBAL_LOCK,
     CONF_POLICY,
     DOMAIN,
@@ -179,7 +179,7 @@ async def test_page_service_reports_a_failed_target(
     hass: HomeAssistant, setup_integration, sidecar
 ) -> None:
     """One dead target must not hide the others working, nor be swallowed."""
-    with pytest.raises(HomeAssistantError, match="not a pbx_page media player"):
+    with pytest.raises(HomeAssistantError, match="not a media2sip media player"):
         await hass.services.async_call(
             DOMAIN,
             "page",

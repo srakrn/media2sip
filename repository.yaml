@@ -4,6 +4,6 @@
 # The same repository is also a HACS integration repository (hacs.json plus
 # custom_components/). The two mechanisms look at different files and do not
 # collide, which keeps both halves of the project versioned together.
-name: PBX Page
+name: Media2SIP
 url: https://github.com/srakrn/media2sip
 maintainer: srakrn <tanersirakorn@gmail.com>

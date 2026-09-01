@@ -52,9 +52,9 @@ configuration:
   sounds_dir:
     name: Sounds directory
     description: >-
-      Where your own WAV files live, e.g. /share/pbx_page_sounds. Built-in sounds
+      Where your own WAV files live, e.g. /share/media2sip_sounds. Built-in sounds
       always work regardless.
   log_level:
     name: Log level
 network:
-  8080/tcp: Control API used by the pbx_page integration
+  8080/tcp: Control API used by the media2sip integration

@@ -7,7 +7,7 @@ import logging
 import pytest
 from homeassistant.core import HomeAssistant
 
-from custom_components.pbx_page import _async_warn_on_version_mismatch
+from custom_components.media2sip import _async_warn_on_version_mismatch
 
 
 async def test_mismatch_is_warned_about(

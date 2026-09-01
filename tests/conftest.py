@@ -20,7 +20,7 @@ from homeassistant.const import CONF_TOKEN, CONF_URL
 from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.pbx_page.const import (
+from custom_components.media2sip.const import (
     CONF_EXTENSION,
     CONF_NAME,
     CONF_TARGETS,
@@ -199,7 +199,7 @@ def integration_version() -> str:
     """
     manifest = (
         pathlib.Path(__file__).resolve().parents[1]
-        / "custom_components/pbx_page/manifest.json"
+        / "custom_components/media2sip/manifest.json"
     )
     return json.loads(manifest.read_text())["version"]
 
@@ -213,7 +213,7 @@ def sidecar() -> FakeSidecar:
 def config_entry() -> MockConfigEntry:
     return MockConfigEntry(
         domain=DOMAIN,
-        title="PBX Page (test)",
+        title="Media2SIP (test)",
         # The flow sets the sidecar URL as the unique id; a fixture that omits it
         # would not catch a duplicate-entry regression.
         unique_id="http://sidecar.test:8080",
@@ -240,7 +240,7 @@ async def setup_integration(
     network.
     """
     config_entry.add_to_hass(hass)
-    with patch("custom_components.pbx_page.PbxPageClient", return_value=sidecar):
+    with patch("custom_components.media2sip.PbxPageClient", return_value=sidecar):
         assert await hass.config_entries.async_setup(config_entry.entry_id)
         await hass.async_block_till_done()
         yield config_entry

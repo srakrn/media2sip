@@ -13,7 +13,7 @@ from homeassistant.components.media_player.errors import BrowseError
 from homeassistant.const import ATTR_SUPPORTED_FEATURES
 from homeassistant.core import HomeAssistant
 
-from custom_components.pbx_page.media_player import SOUNDS_ROOT
+from custom_components.media2sip.media_player import SOUNDS_ROOT
 
 ENTITY = "media_player.working_zone"
 

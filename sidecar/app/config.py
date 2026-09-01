@@ -117,7 +117,7 @@ class Config:
     sounds_dir: Path = Path("/data/sounds")
     # Shipped in the image, outside /data so a Home Assistant add-on's persistent
     # volume cannot shadow it.
-    builtin_sounds_dir: Path = Path("/opt/pbx-page/sounds")
+    builtin_sounds_dir: Path = Path("/opt/media2sip/sounds")
     cache_max_bytes: int = 256 * 1024 * 1024
 
     log_level: str = "INFO"
@@ -184,7 +184,7 @@ def load() -> Config:
         answer_timeout=_get("ANSWER_TIMEOUT", 20.0, float),
         cache_dir=Path(_get("CACHE_DIR", "/data/cache")),
         sounds_dir=Path(_get("SOUNDS_DIR", "/data/sounds")),
-        builtin_sounds_dir=Path(_get("BUILTIN_SOUNDS_DIR", "/opt/pbx-page/sounds")),
+        builtin_sounds_dir=Path(_get("BUILTIN_SOUNDS_DIR", "/opt/media2sip/sounds")),
         cache_max_bytes=_get("CACHE_MAX_BYTES", 256 * 1024 * 1024, int),
         log_level=_get("LOG_LEVEL", "INFO").upper(),
         sip_log_level=_get("SIP_LOG_LEVEL", 2, int),

@@ -1,6 +1,6 @@
-name: PBX Page Sidecar
+name: Media2SIP Sidecar
 version: "0.3.0"
-slug: pbx_page_sidecar
+slug: media2sip_sidecar
 description: SIP user agent that pages PBX extensions on behalf of Home Assistant
 url: https://github.com/srakrn/media2sip/tree/main/sidecar
 arch:
@@ -28,9 +28,9 @@ host_network: true
 ports:
   8080/tcp: 8080
 ports_description:
-  8080/tcp: Control API used by the pbx_page integration
+  8080/tcp: Control API used by the media2sip integration
 
-# For your own sound files: drop WAVs in /share/pbx_page_sounds and set
+# For your own sound files: drop WAVs in /share/media2sip_sounds and set
 # sounds_dir to match. Built-in sounds ship in the image and always work.
 map:
   - share:rw

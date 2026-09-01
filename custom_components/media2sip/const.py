@@ -1,10 +1,10 @@
-"""Constants for the PBX Page integration."""
+"""Constants for the Media2SIP integration."""
 
 from __future__ import annotations
 
 from typing import Final
 
-DOMAIN: Final = "pbx_page"
+DOMAIN: Final = "media2sip"
 
 # -- config entry ---------------------------------------------------------
 

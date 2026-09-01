@@ -31,7 +31,7 @@ serves a Docker deployment and an add-on without knowing which it is.
 | `API_TOKEN` | — | unset means an unauthenticated API, and the sidecar warns loudly at startup. Only acceptable on a private network |
 | `SIDECAR_PORT` | `8080` | |
 | `LOG_LEVEL` / `SIP_LOG_LEVEL` | `INFO` / `2` | raise `SIP_LOG_LEVEL` to `4` for full SIP traces |
-| `SOUNDS_DIR` | `/data/sounds` | your own clips. Built-ins ship at `/opt/pbx-page/sounds` and are searched after, so you can override one by name |
+| `SOUNDS_DIR` | `/data/sounds` | your own clips. Built-ins ship at `/opt/media2sip/sounds` and are searched after, so you can override one by name |
 | `SIP_ACCOUNTS` | — | JSON list, for more than one PBX |
 
 `SIP_ACCOUNTS` exists because one account is one PBX. **Targets are not
@@ -39,9 +39,9 @@ accounts**: a single registration pages any number of extensions.
 
 ### Your own sounds
 
-Drop 8 kHz mono 16-bit PCM WAVs into `SOUNDS_DIR` — `/share/pbx_page_sounds` is
+Drop 8 kHz mono 16-bit PCM WAVs into `SOUNDS_DIR` — `/share/media2sip_sounds` is
 a sensible choice for the add-on. They appear in `GET /sounds`, in the entity's
-source list, and as `sound:<name>` in `pbx_page.page`. Other formats are
+source list, and as `sound:<name>` in `media2sip.page`. Other formats are
 transcoded on first use, so the requirement is a convention rather than a rule.
 
 ## The integration

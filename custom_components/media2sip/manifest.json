@@ -1,6 +1,6 @@
 {
-  "domain": "pbx_page",
-  "name": "PBX Page",
+  "domain": "media2sip",
+  "name": "Media2SIP",
   "codeowners": [
     "@srakrn"
   ],

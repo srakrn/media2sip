@@ -107,7 +107,7 @@ class PbxPageConfigFlow(ConfigFlow, domain=DOMAIN):
                 )
                 if not user_input.get("add_another"):
                     return self.async_create_entry(
-                        title=f"PBX Page ({self._url})",
+                        title=f"Media2SIP ({self._url})",
                         data={
                             CONF_URL: self._url,
                             CONF_TOKEN: self._token,

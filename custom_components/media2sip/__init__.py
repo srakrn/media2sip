@@ -1,6 +1,6 @@
-"""The PBX Page integration.
+"""The Media2SIP integration.
 
-Owns the sidecar client's lifecycle and the domain-level `pbx_page.page` service.
+Owns the sidecar client's lifecycle and the domain-level `media2sip.page` service.
 There is no SIP here and no compiled dependency; everything below the control API
 lives in the sidecar, which is what makes this side maintainable.
 """
@@ -138,7 +138,7 @@ async def _async_reload_entry(hass: HomeAssistant, entry: PbxPageConfigEntry) ->
 
 
 def _async_register_services(hass: HomeAssistant) -> None:
-    """Register `pbx_page.page`, for automations that do not want media player semantics."""
+    """Register `media2sip.page`, for automations that do not want media player semantics."""
     if hass.services.has_service(DOMAIN, SERVICE_PAGE):
         return
 
@@ -152,7 +152,7 @@ def _async_register_services(hass: HomeAssistant) -> None:
         for entity_id in targets:
             entity = _find_entity(hass, entity_id)
             if entity is None:
-                raise HomeAssistantError(f"{entity_id} is not a pbx_page media player")
+                raise HomeAssistantError(f"{entity_id} is not a media2sip media player")
             entities.append(entity)
 
         results = await asyncio.gather(

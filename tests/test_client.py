@@ -6,7 +6,7 @@ import pytest
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from custom_components.pbx_page.client import PbxPageClient, SidecarBusy, SidecarError
+from custom_components.media2sip.client import PbxPageClient, SidecarBusy, SidecarError
 
 URL = "http://sidecar.test:8080"
 

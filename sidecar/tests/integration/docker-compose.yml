@@ -3,12 +3,12 @@
 # Nothing here depends on FreePBX, which is what makes it practical to run in CI.
 # Both containers sit on one bridge network with no NAT between them, so SDP
 # addresses are directly reachable and the test exercises SIP and RTP for real.
-name: pbx-page-e2e
+name: media2sip-e2e
 
 services:
   asterisk:
     image: andrius/asterisk:latest
-    container_name: pbx-page-e2e-asterisk
+    container_name: media2sip-e2e-asterisk
     volumes:
       - ./asterisk/pjsip.conf:/etc/asterisk/pjsip.conf:ro
       - ./asterisk/extensions.conf:/etc/asterisk/extensions.conf:ro
@@ -18,7 +18,7 @@ services:
 
   sidecar:
     image: media2sip:latest
-    container_name: pbx-page-e2e-sidecar
+    container_name: media2sip-e2e-sidecar
     depends_on: [asterisk]
     environment:
       SIP_USERNAME: "9901"
@@ -36,7 +36,7 @@ services:
   # Reads the recording Asterisk made, so assertions can run on the host.
   inspector:
     image: media2sip:latest
-    container_name: pbx-page-e2e-inspector
+    container_name: media2sip-e2e-inspector
     volumes:
       - recordings:/recordings
     entrypoint: ["sleep", "infinity"]
