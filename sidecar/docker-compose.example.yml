@@ -10,7 +10,7 @@
 
 services:
   media2sip-sidecar:
-    image: srakrn/media2sip:1.0.0
+    image: srakrn/media2sip:1.1.0
     container_name: media2sip-sidecar
     restart: unless-stopped
 
