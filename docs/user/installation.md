@@ -154,11 +154,26 @@ integration will say so in the log until both agree.
 The project was renamed to Media2SIP, and the rename reaches the identifiers, so
 it is not an in-place upgrade:
 
-- **The integration.** The domain changed from `pbx_page` to `media2sip`. Remove
-  the old integration in **Settings → Devices & Services** and add the new one;
-  your targets have to be re-entered. Automations calling `pbx_page.page` must be
-  changed to `media2sip.page`. Entity ids are derived from the target's name, so
-  they survive if you name the targets the same way.
+- **The integration — do not update it in HACS.** The domain changed from
+  `pbx_page` to `media2sip`, which means the folder in `custom_components/` did
+  too, and HACS looks for the folder it recorded when it first installed the
+  repository. Pressing *Update* fails with **"No content to download"**. Remove
+  and re-download instead, in this order:
+
+  1. **Settings → Devices & Services → PBX Page** — delete the config entry, or
+     Home Assistant logs errors about an integration whose files have gone.
+  2. **HACS → PBX Page → ⋮ → Remove**, which deletes
+     `custom_components/pbx_page/`. Check by hand that it is actually gone.
+  3. Restart Home Assistant.
+  4. **HACS → Download.** The repository URL is unchanged, so the custom
+     repository entry stays; it now shows as **Media2SIP**. If it still appears
+     under the old identity, remove the custom repository and re-add
+     `https://github.com/srakrn/media2sip` as type *Integration*.
+  5. Restart, then **Add Integration → Media2SIP** and re-enter your targets.
+
+  Automations calling `pbx_page.page` must be changed to `media2sip.page`. Entity
+  ids are derived from the target's name, so they survive if you name the targets
+  the same way.
 - **The add-on.** The slug changed, so the supervisor treats it as a new add-on.
   Copy your options out of the old one, install **Media2SIP Sidecar**, then
   uninstall the old **PBX Page Sidecar**.
