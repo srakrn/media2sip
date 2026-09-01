@@ -1,5 +1,5 @@
 name: Media2SIP Sidecar
-version: "0.3.0"
+version: "1.0.0"
 slug: media2sip_sidecar
 description: SIP user agent that pages PBX extensions on behalf of Home Assistant
 url: https://github.com/srakrn/media2sip/tree/main/sidecar
