@@ -150,6 +150,13 @@ only opens a draft, and a draft builds nothing — that is the point of it.
 Make the Docker Hub repository public on its first push, or add-on users will get
 an authentication error rather than an image.
 
+**GHCR needs the same treatment, and it is easy to miss.** Actions creates the
+container package *private*, so an anonymous pull gets a 404 that looks exactly
+like "no such image". Flip it once, at
+`github.com/users/<you>/packages/container/media2sip/settings` → Change
+visibility → Public. Docker Hub is the primary either way; GHCR is the mirror the
+docs promise, so it should not be a broken promise.
+
 If your default branch is protected against direct pushes, the **prepare release**
 workflow cannot commit the version bump. Either allow the `github-actions[bot]`
 actor to bypass it, or do that step by hand — the release itself is unaffected.
