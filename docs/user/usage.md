@@ -2,7 +2,7 @@
 
 One `media_player` entity per paging target. Install first — see
 [installation.md](installation.md) — and set the options described in
-[configuration.md](configuration.md).
+[configuration.md](configuration.md), where targets are also added and edited.
 
 ## The entity
 

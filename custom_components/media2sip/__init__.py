@@ -11,6 +11,7 @@ import asyncio
 import logging
 from dataclasses import dataclass, field
 from typing import Any
+from uuid import uuid4
 
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
@@ -18,6 +19,7 @@ from homeassistant.const import CONF_TOKEN, CONF_URL, Platform
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import ConfigEntryNotReady, HomeAssistantError
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.loader import async_get_integration
 
@@ -28,6 +30,9 @@ from .const import (
     ATTR_SOUND,
     ATTR_TARGETS,
     ATTR_TEXT,
+    CONF_EXTENSION,
+    CONF_TARGET_ID,
+    CONF_TARGETS,
     DEV_VERSION,
     DOMAIN,
     PRIORITY_NORMAL,
@@ -95,6 +100,52 @@ async def async_setup_entry(hass: HomeAssistant, entry: PbxPageConfigEntry) -> b
     entry.async_on_unload(entry.add_update_listener(_async_reload_entry))
 
     _async_register_services(hass)
+    return True
+
+
+async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Give every target a stable id, keeping the entities it already created.
+
+    Version 1 keyed the entity on the extension, which meant an extension could
+    never be edited: the unique id would change, Home Assistant would treat it as a
+    different entity, and the old one would be left behind holding the history and
+    the area. Version 2 keys on an opaque id instead, so the extension becomes an
+    ordinary editable field.
+
+    The rename has to reach the registries as well as the entry, or the migration
+    itself would do the very thing it exists to prevent.
+    """
+    if entry.version > 2:
+        # Downgrades are not supported; refusing beats corrupting the entry.
+        return False
+    if entry.version == 1:
+        entities = er.async_get(hass)
+        devices = dr.async_get(hass)
+        targets: list[dict[str, Any]] = []
+
+        for target in entry.data.get(CONF_TARGETS, []):
+            if target.get(CONF_TARGET_ID):
+                targets.append(target)
+                continue
+
+            migrated = {**target, CONF_TARGET_ID: uuid4().hex[:8]}
+            old_id = f"{entry.entry_id}_{str(target[CONF_EXTENSION])}"
+            new_id = f"{entry.entry_id}_{migrated[CONF_TARGET_ID]}"
+
+            entity_id = entities.async_get_entity_id(Platform.MEDIA_PLAYER, DOMAIN, old_id)
+            if entity_id is not None:
+                entities.async_update_entity(entity_id, new_unique_id=new_id)
+            device = devices.async_get_device(identifiers={(DOMAIN, old_id)})
+            if device is not None:
+                devices.async_update_device(device.id, new_identifiers={(DOMAIN, new_id)})
+
+            targets.append(migrated)
+
+        hass.config_entries.async_update_entry(
+            entry, data={**entry.data, CONF_TARGETS: targets}, version=2
+        )
+        _LOGGER.debug("migrated %s targets to stable ids", len(targets))
+
     return True
 
 

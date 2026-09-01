@@ -120,7 +120,9 @@ cp -r media2sip/custom_components/media2sip /path/to/config/custom_components/
 Give the sidecar's address (`http://<sidecar-host>:8080`, and the API token if
 you set one). It is validated against `/health` before anything is created, so a
 typo fails here rather than becoming a permanently unavailable entity. Then add
-your paging targets, one at a time — a name and the paging extension.
+your paging targets, one at a time — a name and the paging extension. More can be
+added later, and an extension can be changed, from **Configure** on the entry; see
+[configuration.md](configuration.md#paging-targets).
 
 You get one `media_player` per target. Try it:
 

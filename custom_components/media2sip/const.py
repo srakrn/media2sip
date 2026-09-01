@@ -14,6 +14,11 @@ CONF_TARGETS: Final = "targets"
 CONF_NAME: Final = "name"
 CONF_EXTENSION: Final = "extension"
 
+# A target's identity is this opaque id, not its extension. The extension is
+# something the user changes when the PBX changes; keying the entity on it would
+# mean an edit orphaned the entity and took its history and area with it.
+CONF_TARGET_ID: Final = "id"
+
 # -- options --------------------------------------------------------------
 
 CONF_LEAD_IN: Final = "lead_in"

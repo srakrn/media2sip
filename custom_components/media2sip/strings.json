@@ -31,6 +31,36 @@
   "options": {
     "step": {
       "init": {
+        "title": "Media2SIP",
+        "menu_options": {
+          "settings": "Paging options",
+          "add_target": "Add a paging target",
+          "pick_target": "Edit a paging target"
+        }
+      },
+      "add_target": {
+        "title": "Add a paging target",
+        "description": "One target is one extension the sidecar dials. It becomes a new media player.",
+        "data": {
+          "name": "Name",
+          "extension": "Paging extension"
+        }
+      },
+      "pick_target": {
+        "title": "Edit a paging target",
+        "data": {
+          "id": "Target"
+        }
+      },
+      "edit_target": {
+        "title": "Edit a paging target",
+        "description": "Currently dialling {extension}. The media player keeps its entity id and history when you change either field.",
+        "data": {
+          "name": "Name",
+          "extension": "Paging extension"
+        }
+      },
+      "settings": {
         "title": "Paging options",
         "data": {
           "lead_in": "Lead-in",
@@ -44,6 +74,12 @@
           "global_lock": "Enable when targets share physical handsets."
         }
       }
+    },
+    "error": {
+      "duplicate_target": "Another target already dials that extension."
+    },
+    "abort": {
+      "unknown_target": "That target no longer exists."
     }
   },
   "selector": {
@@ -61,11 +97,26 @@
       "name": "Page",
       "description": "Play a chime or static sound on one or more paging targets.",
       "fields": {
-        "targets": { "name": "Targets", "description": "Paging target entities." },
-        "sound": { "name": "Sound", "description": "Static sound held on the sidecar." },
-        "chime": { "name": "Chime", "description": "Sound played before the announcement." },
-        "text": { "name": "Text", "description": "Use tts.speak against the entity instead." },
-        "priority": { "name": "Priority", "description": "Urgent preempts and skips the queue." }
+        "targets": {
+          "name": "Targets",
+          "description": "Paging target entities."
+        },
+        "sound": {
+          "name": "Sound",
+          "description": "Static sound held on the sidecar."
+        },
+        "chime": {
+          "name": "Chime",
+          "description": "Sound played before the announcement."
+        },
+        "text": {
+          "name": "Text",
+          "description": "Use tts.speak against the entity instead."
+        },
+        "priority": {
+          "name": "Priority",
+          "description": "Urgent preempts and skips the queue."
+        }
       }
     }
   }

@@ -38,6 +38,7 @@ from .const import (
     CONF_LEAD_IN,
     CONF_NAME,
     CONF_POLICY,
+    CONF_TARGET_ID,
     CONF_TARGETS,
     DEFAULT_POLICY,
     DOMAIN,
@@ -110,7 +111,11 @@ class PbxPageMediaPlayer(MediaPlayerEntity):
         self._extension: str = str(target[CONF_EXTENSION])
         self._target_name: str = target[CONF_NAME]
 
-        self._attr_unique_id = f"{entry.entry_id}_{self._extension}"
+        # Keyed on the target's id, not its extension, so pointing a target at a
+        # different extension edits this entity rather than replacing it. The
+        # fallback is only reached for an entry that predates the migration.
+        target_id = str(target.get(CONF_TARGET_ID) or self._extension)
+        self._attr_unique_id = f"{entry.entry_id}_{target_id}"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, self._attr_unique_id)},
             name=self._target_name,

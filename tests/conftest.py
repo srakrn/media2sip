@@ -23,6 +23,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.media2sip.const import (
     CONF_EXTENSION,
     CONF_NAME,
+    CONF_TARGET_ID,
     CONF_TARGETS,
     DOMAIN,
 )
@@ -214,6 +215,7 @@ def config_entry() -> MockConfigEntry:
     return MockConfigEntry(
         domain=DOMAIN,
         title="Media2SIP (test)",
+        version=2,
         # The flow sets the sidecar URL as the unique id; a fixture that omits it
         # would not catch a duplicate-entry regression.
         unique_id="http://sidecar.test:8080",
@@ -221,8 +223,8 @@ def config_entry() -> MockConfigEntry:
             CONF_URL: "http://sidecar.test:8080",
             CONF_TOKEN: None,
             CONF_TARGETS: [
-                {CONF_NAME: "Working Zone", CONF_EXTENSION: "991"},
-                {CONF_NAME: "Warehouse", CONF_EXTENSION: "992"},
+                {CONF_TARGET_ID: "aaaa1111", CONF_NAME: "Working Zone", CONF_EXTENSION: "991"},
+                {CONF_TARGET_ID: "bbbb2222", CONF_NAME: "Warehouse", CONF_EXTENSION: "992"},
             ],
         },
         options={},

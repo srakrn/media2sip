@@ -56,8 +56,25 @@ Page → Configure**.
 | Concurrency policy | `replace` | What happens when a page arrives while one is playing — see [usage.md](usage.md#concurrency). |
 | Serialise across all targets | off | For targets that share physical handsets. |
 
-Paging targets are added one at a time, each a name and a paging extension, and
-each becomes one `media_player`.
+### Paging targets
+
+Each target is a name and a paging extension, and becomes one `media_player`. The
+first is added when you set the integration up; after that, **Configure** opens a
+menu:
+
+| | |
+| --- | --- |
+| **Paging options** | the table above |
+| **Add a paging target** | a new extension, and with it a new entity |
+| **Edit a paging target** | rename one, or point it at a different extension |
+
+Editing is an edit, not a replacement. A target's identity is an id assigned when
+it is created, not its extension, so changing the extension keeps the same entity
+— its entity id, history, area and customisation all survive, and only what it
+dials changes. Two targets cannot share an extension.
+
+Home Assistant reloads the entry when you finish, which briefly drops any page in
+flight.
 
 ## Keeping the halves in step
 
